@@ -41,13 +41,25 @@ let package = Package(
                 .rfc3986,
                 .rfc5322
             ]
-        )
+        ),
         .target(
             name: .rfc6068.foundation,
             dependencies: [
                 .rfc6068
             ]
-        )
+        ),
+        .testTarget(
+            name: "RFC 6068 Foundation Tests",
+            dependencies: [
+                "RFC 6068",
+            ]
+        ),
+        .testTarget(
+            name: "RFC 6068 Tests",
+            dependencies: [
+                "RFC 6068",
+            ]
+        ),
     ],
     swiftLanguageModes: [.v6]
 )
@@ -63,6 +75,7 @@ for target in package.targets where ![.system, .binary, .plugin, .macro].contain
         .enableUpcomingFeature("ExistentialAny"),
         .enableUpcomingFeature("InternalImportsByDefault"),
         .enableUpcomingFeature("MemberImportVisibility"),
+        .enableUpcomingFeature("NonisolatedNonsendingByDefault"),
         .enableExperimentalFeature("Lifetimes"),
         .enableExperimentalFeature("SuppressedAssociatedTypes"),
         .enableExperimentalFeature("SuppressedAssociatedTypesWithDefaults"),
