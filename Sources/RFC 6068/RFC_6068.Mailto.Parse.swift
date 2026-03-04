@@ -55,7 +55,6 @@ extension RFC_6068.Mailto.Parse {
 }
 
 extension RFC_6068.Mailto.Parse: Parser.`Protocol` {
-    public typealias ParseOutput = Output
     public typealias Failure = RFC_6068.Mailto.Parse<Input>.Error
 
     @inlinable
