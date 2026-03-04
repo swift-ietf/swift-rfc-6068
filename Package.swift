@@ -31,7 +31,8 @@ let package = Package(
     dependencies: [
         .package(path: "../../swift-foundations/swift-ascii"),
         .package(path: "../swift-rfc-3986"),
-        .package(path: "../swift-rfc-5322")
+        .package(path: "../swift-rfc-5322"),
+        .package(path: "../../swift-primitives/swift-parser-primitives")
     ],
     targets: [
         .target(
@@ -39,7 +40,8 @@ let package = Package(
             dependencies: [
                 .incits41986,
                 .rfc3986,
-                .rfc5322
+                .rfc5322,
+                .product(name: "Parser Primitives", package: "swift-parser-primitives")
             ]
         ),
         .target(
