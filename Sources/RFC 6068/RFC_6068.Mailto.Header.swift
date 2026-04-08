@@ -11,7 +11,7 @@
 //
 // ===----------------------------------------------------------------------===//
 
-public import ASCII
+public import ASCII_Serializer_Primitives
 
 extension RFC_6068.Mailto {
     /// A header field in a mailto URI
