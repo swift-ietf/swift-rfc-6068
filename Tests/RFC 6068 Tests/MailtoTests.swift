@@ -18,31 +18,31 @@ import Testing
 @Suite("RFC 6068 Mailto Tests")
 struct MailtoTests {
 
-    @Test("Parse simple mailto URI")
-    func parseSimpleMailto() throws {
+    @Test
+    func `Parse simple mailto URI`() throws {
         let mailto = try RFC_6068.Mailto(ascii: "mailto:user@example.com".utf8)
         #expect(mailto.to.count == 1)
         #expect(mailto.to.first?.rawValue == "user@example.com")
         #expect(mailto.headers.isEmpty)
     }
 
-    @Test("Parse mailto with subject")
-    func parseMailtoWithSubject() throws {
+    @Test
+    func `Parse mailto with subject`() throws {
         let mailto = try RFC_6068.Mailto(ascii: "mailto:user@example.com?subject=Hello".utf8)
         #expect(mailto.to.count == 1)
         #expect(mailto.subject == "Hello")
     }
 
-    @Test("Parse mailto with percent-encoded subject")
-    func parseMailtoWithEncodedSubject() throws {
+    @Test
+    func `Parse mailto with percent-encoded subject`() throws {
         let mailto = try RFC_6068.Mailto(
             ascii: "mailto:user@example.com?subject=Hello%20World".utf8
         )
         #expect(mailto.subject == "Hello World")
     }
 
-    @Test("Parse mailto with multiple headers")
-    func parseMailtoWithMultipleHeaders() throws {
+    @Test
+    func `Parse mailto with multiple headers`() throws {
         let mailto = try RFC_6068.Mailto(
             ascii: "mailto:user@example.com?subject=Test&body=Hello".utf8
         )
@@ -50,21 +50,21 @@ struct MailtoTests {
         #expect(mailto.body == "Hello")
     }
 
-    @Test("Parse mailto with multiple recipients")
-    func parseMailtoWithMultipleRecipients() throws {
+    @Test
+    func `Parse mailto with multiple recipients`() throws {
         let mailto = try RFC_6068.Mailto(ascii: "mailto:user1@example.com,user2@example.com".utf8)
         #expect(mailto.to.count == 2)
     }
 
-    @Test("Parse mailto with no recipients (headers only)")
-    func parseMailtoHeadersOnly() throws {
+    @Test
+    func `Parse mailto with no recipients (headers only)`() throws {
         let mailto = try RFC_6068.Mailto(ascii: "mailto:?subject=Test".utf8)
         #expect(mailto.to.isEmpty)
         #expect(mailto.subject == "Test")
     }
 
-    @Test("Serialize mailto URI")
-    func serializeMailto() throws {
+    @Test
+    func `Serialize mailto URI`() throws {
         let addr = try RFC_5322.EmailAddress("user@example.com")
         let mailto = try RFC_6068.Mailto(
             to: [addr],
@@ -76,23 +76,23 @@ struct MailtoTests {
         #expect(serialized.contains("subject=Hello"))
     }
 
-    @Test("Mailto is Hashable")
-    func mailtoHashable() throws {
+    @Test
+    func `Mailto is Hashable`() throws {
         let mailto1 = try RFC_6068.Mailto(ascii: "mailto:user@example.com".utf8)
         let mailto2 = try RFC_6068.Mailto(ascii: "mailto:user@example.com".utf8)
         #expect(mailto1 == mailto2)
         #expect(mailto1.hashValue == mailto2.hashValue)
     }
 
-    @Test("Header parsing")
-    func headerParsing() throws {
+    @Test
+    func `Header parsing`() throws {
         let header = try RFC_6068.Mailto.Header(ascii: "subject=Hello%20World".utf8)
         #expect(header.name == "subject")
         #expect(header.value == "Hello World")
     }
 
-    @Test("Header factory methods")
-    func headerFactoryMethods() throws {
+    @Test
+    func `Header factory methods`() throws {
         let subject = try RFC_6068.Mailto.Header.subject("Test")
         #expect(subject.name == "subject")
         #expect(subject.value == "Test")
@@ -102,16 +102,16 @@ struct MailtoTests {
         #expect(body.value == "Content")
     }
 
-    @Test("RFC 6068 example: simple mailto")
-    func rfcExampleSimple() throws {
+    @Test
+    func `RFC 6068 example: simple mailto`() throws {
         // RFC 6068 Section 6.1
         let mailto = try RFC_6068.Mailto(ascii: "mailto:chris@example.com".utf8)
         #expect(mailto.to.count == 1)
         #expect(mailto.to.first?.rawValue == "chris@example.com")
     }
 
-    @Test("RFC 6068 example: with subject")
-    func rfcExampleWithSubject() throws {
+    @Test
+    func `RFC 6068 example: with subject`() throws {
         // RFC 6068 Section 6.2
         let mailto = try RFC_6068.Mailto(
             ascii: "mailto:infobot@example.com?subject=current-issue".utf8
@@ -120,8 +120,8 @@ struct MailtoTests {
         #expect(mailto.subject == "current-issue")
     }
 
-    @Test("RFC 6068 example: with body")
-    func rfcExampleWithBody() throws {
+    @Test
+    func `RFC 6068 example: with body`() throws {
         // RFC 6068 Section 6.3
         let mailto = try RFC_6068.Mailto(
             ascii: "mailto:infobot@example.com?body=send%20current-issue".utf8
@@ -129,15 +129,15 @@ struct MailtoTests {
         #expect(mailto.body == "send current-issue")
     }
 
-    @Test("Error: empty input")
-    func errorEmpty() {
+    @Test
+    func `Error: empty input`() {
         #expect(throws: RFC_6068.Mailto.Error.self) {
             try RFC_6068.Mailto(ascii: "".utf8)
         }
     }
 
-    @Test("Error: missing scheme")
-    func errorMissingScheme() {
+    @Test
+    func `Error: missing scheme`() {
         #expect(throws: RFC_6068.Mailto.Error.self) {
             try RFC_6068.Mailto(ascii: "user@example.com".utf8)
         }
