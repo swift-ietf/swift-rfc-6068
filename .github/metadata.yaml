@@ -1,0 +1,10 @@
+# .github/metadata.yaml
+# Triaged by AI-assisted bulk pass (2026-04-29).
+description: "Swift implementation of RFC 6068: The 'mailto' URI Scheme."
+topics:
+  - standards
+  - rfc
+  - rfc-6068
+  - email
+  - uri
+homepage: "https://swift-institute.org"
