@@ -120,16 +120,16 @@ extension RFC_6068.Mailto.Header: Binary.ASCII.Serializable {
     static public func serialize<Buffer>(
         ascii header: RFC_6068.Mailto.Header,
         into buffer: inout Buffer
-    ) where Buffer: RangeReplaceableCollection, Buffer.Element == UInt8 {
+    ) where Buffer: RangeReplaceableCollection, Buffer.Element == Byte {
 
-        // Percent-encode name
+        // Percent-encode name (RFC_3986 percentEncode returns [UInt8] — BSLI append bridges)
         buffer.append(
             contentsOf: RFC_3986.percentEncode(Array(header.name.utf8), allowing: .mailto.qchar)
         )
 
-        buffer.append(UInt8.ascii.equalsSign)
+        buffer.append(ASCII.Code.equalsSign)
 
-        // Percent-encode value
+        // Percent-encode value (RFC_3986 percentEncode returns [UInt8] — BSLI append bridges)
         buffer.append(
             contentsOf: RFC_3986.percentEncode(Array(header.value.utf8), allowing: .mailto.qchar)
         )
@@ -146,7 +146,7 @@ extension RFC_6068.Mailto.Header: Binary.ASCII.Serializable {
     /// ## Category Theory
     ///
     /// Parsing transformation:
-    /// - **Domain**: [UInt8] (ASCII bytes, percent-encoded)
+    /// - **Domain**: [Byte] (ASCII bytes, percent-encoded)
     /// - **Codomain**: RFC_6068.Mailto.Header (structured data)
     ///
     /// - Parameter bytes: The header field as ASCII bytes
@@ -155,17 +155,20 @@ extension RFC_6068.Mailto.Header: Binary.ASCII.Serializable {
         ascii bytes: Bytes,
         in context: Void = ()
     ) throws(Error)
-    where Bytes.Element == UInt8 {
-        let byteArray = Array(bytes)
+    where Bytes.Element == Byte {
+        // Type-up: lift to ASCII.Code at the entry boundary so the body works
+        // against ASCII.Code constants directly (RFC 6068 grammar is strict ASCII).
+        let byteArray = Array<ASCII.Code>(bytes)
         guard !byteArray.isEmpty else { throw Error.empty }
 
         // Find the '=' separator
-        guard let equalsIndex = byteArray.firstIndex(of: UInt8.ascii.equalsSign) else {
+        guard let equalsIndex = byteArray.firstIndex(of: ASCII.Code.equalsSign) else {
             throw Error.missingEquals(String(decoding: byteArray, as: UTF8.self))
         }
 
-        let nameBytes = Array(byteArray[..<equalsIndex])
-        let valueBytes = Array(byteArray[(equalsIndex + 1)...])
+        // Bridge to UInt8 for RFC_3986.percentDecode (UInt8-substrate upstream API)
+        let nameBytes = Array<UInt8>(byteArray[..<equalsIndex])
+        let valueBytes = Array<UInt8>(byteArray[(equalsIndex + 1)...])
 
         guard !nameBytes.isEmpty else {
             throw Error.emptyName(String(decoding: byteArray, as: UTF8.self))

@@ -120,26 +120,27 @@ extension RFC_6068.Mailto: Binary.ASCII.Serializable {
     static public func serialize<Buffer>(
         ascii mailto: RFC_6068.Mailto,
         into buffer: inout Buffer
-    ) where Buffer: RangeReplaceableCollection, Buffer.Element == UInt8 {
+    ) where Buffer: RangeReplaceableCollection, Buffer.Element == Byte {
         // Scheme
         buffer.append(contentsOf: "mailto:".utf8)
 
         // To addresses (percent-encoded, comma-separated)
         for (index, addr) in mailto.to.enumerated() {
             if index > 0 {
-                buffer.append(UInt8.ascii.comma)
+                buffer.append(ASCII.Code.comma)
             }
+            // RFC_6068.Mailto.percentEncode returns [UInt8] — BSLI append bridges to Byte buffer
             buffer.append(contentsOf: RFC_6068.Mailto.percentEncode(Array(addr.rawValue.utf8)))
         }
 
         // Headers
         if !mailto.headers.isEmpty {
-            buffer.append(UInt8.ascii.questionMark)
+            buffer.append(ASCII.Code.questionMark)
             for (index, header) in mailto.headers.enumerated() {
                 if index > 0 {
-                    buffer.append(UInt8.ascii.ampersand)
+                    buffer.append(ASCII.Code.ampersand)
                 }
-                buffer.append(contentsOf: [UInt8](header))
+                buffer.append(contentsOf: Array<Byte>(ascii: header))
             }
         }
     }
@@ -155,20 +156,22 @@ extension RFC_6068.Mailto: Binary.ASCII.Serializable {
     /// ## Category Theory
     ///
     /// Parsing transformation:
-    /// - **Domain**: [UInt8] (ASCII bytes)
+    /// - **Domain**: [Byte] (ASCII bytes)
     /// - **Codomain**: RFC_6068.Mailto (structured data)
     ///
     /// ## Example
     ///
     /// ```swift
-    /// let mailto = try RFC_6068.Mailto(ascii: "mailto:user@example.com".utf8)
+    /// let mailto = try RFC_6068.Mailto(ascii: Array<Byte>("mailto:user@example.com".utf8))
     /// ```
     ///
     /// - Parameter bytes: The mailto URI as ASCII bytes
     /// - Throws: `Error` if parsing fails
     public init<Bytes: Collection>(ascii bytes: Bytes, in context: Void = ()) throws(Error)
-    where Bytes.Element == UInt8 {
-        let byteArray = Array(bytes)
+    where Bytes.Element == Byte {
+        // Bridge to UInt8 once at entry — RFC_3986.percentDecode is UInt8-substrate,
+        // so a single up-front conversion avoids per-element `.underlying` later.
+        let byteArray = Array<UInt8>(bytes)
         guard !byteArray.isEmpty else { throw Error.empty }
 
         // Validate and strip scheme
@@ -183,12 +186,12 @@ extension RFC_6068.Mailto: Binary.ASCII.Serializable {
         }
         let remainder = Array(byteArray.dropFirst(scheme.count))
 
-        // Split into path and query components
+        // Split into path and query components (UInt8 domain — RFC_3986 boundary)
         var pathBytes: [UInt8] = []
         var queryBytes: [UInt8] = []
         var inQuery = false
         for byte in remainder {
-            if byte == UInt8.ascii.questionMark && !inQuery {
+            if ASCII.Code(byte) == ASCII.Code.questionMark && !inQuery {
                 inQuery = true
             } else if inQuery {
                 queryBytes.append(byte)
@@ -206,7 +209,7 @@ extension RFC_6068.Mailto: Binary.ASCII.Serializable {
             var addressStrings: [String] = []
             var current: [UInt8] = []
             for byte in decodedPath {
-                if byte == UInt8.ascii.comma {
+                if ASCII.Code(byte) == ASCII.Code.comma {
                     if !current.isEmpty {
                         addressStrings.append(String(decoding: current, as: UTF8.self))
                         current = []
@@ -222,12 +225,14 @@ extension RFC_6068.Mailto: Binary.ASCII.Serializable {
             for addrStr in addressStrings {
                 // Trim whitespace
                 var trimmed = Array(addrStr.utf8)
-                while !trimmed.isEmpty
-                    && (trimmed.first == UInt8.ascii.space || trimmed.first == UInt8.ascii.htab) {
+                while !trimmed.isEmpty,
+                    let first = trimmed.first,
+                    ASCII.Code(first) == ASCII.Code.space || ASCII.Code(first) == ASCII.Code.htab {
                     trimmed.removeFirst()
                 }
-                while !trimmed.isEmpty
-                    && (trimmed.last == UInt8.ascii.space || trimmed.last == UInt8.ascii.htab) {
+                while !trimmed.isEmpty,
+                    let last = trimmed.last,
+                    ASCII.Code(last) == ASCII.Code.space || ASCII.Code(last) == ASCII.Code.htab {
                     trimmed.removeLast()
                 }
                 guard !trimmed.isEmpty else { continue }
@@ -244,7 +249,7 @@ extension RFC_6068.Mailto: Binary.ASCII.Serializable {
             var headerFields: [[UInt8]] = []
             var currentField: [UInt8] = []
             for byte in queryBytes {
-                if byte == UInt8.ascii.ampersand {
+                if ASCII.Code(byte) == ASCII.Code.ampersand {
                     if !currentField.isEmpty {
                         headerFields.append(currentField)
                         currentField = []
@@ -258,7 +263,8 @@ extension RFC_6068.Mailto: Binary.ASCII.Serializable {
             }
 
             for fieldBytes in headerFields {
-                if let header = try? Header(ascii: fieldBytes) {
+                // Header(ascii:) expects Byte — bridge UInt8 → Byte
+                if let header = try? Header(ascii: Array<Byte>(fieldBytes)) {
                     headers.append(header)
                 }
             }
