@@ -29,10 +29,10 @@ let package = Package(
         .library(name: .rfc6068.foundation, targets: [.rfc6068.foundation])
     ],
     dependencies: [
-        .package(path: "../../swift-primitives/swift-ascii-serializer-primitives"),
-        .package(path: "../swift-rfc-3986"),
-        .package(path: "../swift-rfc-5322"),
-        .package(path: "../../swift-primitives/swift-parser-primitives")
+        .package(url: "https://github.com/swift-primitives/swift-ascii-serializer-primitives.git", branch: "main"),
+        .package(url: "https://github.com/swift-ietf/swift-rfc-3986.git", branch: "main"),
+        .package(url: "https://github.com/swift-ietf/swift-rfc-5322.git", branch: "main"),
+        .package(url: "https://github.com/swift-primitives/swift-parser-primitives.git", branch: "main")
     ],
     targets: [
         .target(
