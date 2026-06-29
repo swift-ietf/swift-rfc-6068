@@ -158,7 +158,12 @@ extension RFC_6068.Mailto.Header: Binary.ASCII.Serializable {
     where Bytes.Element == Byte {
         // Type-up: lift to ASCII.Code at the entry boundary so the body works
         // against ASCII.Code constants directly (RFC 6068 grammar is strict ASCII).
-        let byteArray = Array<ASCII.Code>(bytes)
+        let byteArray: [ASCII.Code]
+        do {
+            byteArray = try Array<ASCII.Code>(bytes)
+        } catch {
+            throw Error.invalidPercentEncoding(String(decoding: bytes, as: UTF8.self))
+        }
         guard !byteArray.isEmpty else { throw Error.empty }
 
         // Find the '=' separator
