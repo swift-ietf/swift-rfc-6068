@@ -12,6 +12,9 @@
 // ===----------------------------------------------------------------------===//
 
 public import ASCII_Serializer_Primitives
+public import Binary_Serializable_Primitives
+public import Parseable_ASCII_Primitives
+public import Serializer_Primitives
 
 extension RFC_6068 {
     /// A mailto URI as defined in RFC 6068
@@ -114,13 +117,34 @@ extension RFC_6068.Mailto {
     }
 }
 
-// MARK: - Binary.ASCII.Serializable
+// MARK: - Serializable
 
-extension RFC_6068.Mailto: Binary.ASCII.Serializable {
-    static public func serialize<Buffer>(
-        ascii mailto: RFC_6068.Mailto,
+extension RFC_6068.Mailto: Serializable, ASCII.Serializable, Binary.Serializable {
+    /// Canonical ASCII serializer for the RFC 6068 mailto URI.
+    public static var serializer: Serializer_Primitives.Serializer.Pure<Self, [ASCII.Code]> {
+        Serializer_Primitives.Serializer.Pure { mailto, buffer in
+            var bytes: [Byte] = []
+            serializeBytes(mailto, into: &bytes)
+            buffer.append(contentsOf: bytes.map { ASCII.Code(unchecked: $0) })
+        }
+    }
+
+    /// Explicit `Binary.Serializable` witness disambiguating the two
+    /// constraint-incomparable `serialize(_:into:)` defaults.
+    public static func serialize<Buffer: RangeReplaceableCollection>(
+        _ value: Self,
         into buffer: inout Buffer
-    ) where Buffer: RangeReplaceableCollection, Buffer.Element == Byte {
+    ) where Buffer.Element == Byte {
+        serializeBytes(value, into: &buffer)
+    }
+
+    /// Byte-domain serialization body (`"mailto:" [ to ] [ "?" hfields ]`). The
+    /// nested headers serialize via their own migrated family-Codable
+    /// `.serialized` ([Byte]).
+    private static func serializeBytes<Buffer: RangeReplaceableCollection>(
+        _ mailto: Self,
+        into buffer: inout Buffer
+    ) where Buffer.Element == Byte {
         // Scheme
         buffer.append(contentsOf: "mailto:".utf8)
 
@@ -140,9 +164,18 @@ extension RFC_6068.Mailto: Binary.ASCII.Serializable {
                 if index > 0 {
                     buffer.append(ASCII.Code.ampersand)
                 }
-                buffer.append(contentsOf: Array<Byte>(ascii: header))
+                buffer.append(contentsOf: header.serialized)
             }
         }
+    }
+}
+
+// MARK: - Parseable
+
+extension RFC_6068.Mailto: ASCII.Parseable {
+    /// Creates a mailto URI by validating `string`'s UTF-8 bytes.
+    public init(_ string: some StringProtocol) throws(Error) {
+        try self.init(ascii: [Byte](string.utf8))
     }
 
     /// Parses a mailto URI from ASCII bytes (AUTHORITATIVE IMPLEMENTATION)
@@ -167,7 +200,7 @@ extension RFC_6068.Mailto: Binary.ASCII.Serializable {
     ///
     /// - Parameter bytes: The mailto URI as ASCII bytes
     /// - Throws: `Error` if parsing fails
-    public init<Bytes: Collection>(ascii bytes: Bytes, in context: Void = ()) throws(Error)
+    public init<Bytes: Collection>(ascii bytes: Bytes) throws(Error)
     where Bytes.Element == Byte {
         // Bridge to UInt8 once at entry — RFC_3986.percentDecode is UInt8-substrate,
         // so a single up-front conversion avoids per-element `.underlying` later.
@@ -276,11 +309,24 @@ extension RFC_6068.Mailto: Binary.ASCII.Serializable {
 
 // MARK: - Protocol Conformances
 
-extension RFC_6068.Mailto: Binary.ASCII.RawRepresentable {
+extension RFC_6068.Mailto: Swift.RawRepresentable {
     public typealias RawValue = String
+
+    /// The mailto URI's ASCII serialization as a `String` (computed; derived
+    /// from serialization, not stored).
+    public var rawValue: String {
+        String(decoding: serialized.underlying, as: UTF8.self)
+    }
+
+    public init?(rawValue: String) { try? self.init(rawValue) }
 }
 
-extension RFC_6068.Mailto: CustomStringConvertible {}
+extension RFC_6068.Mailto: CustomStringConvertible {
+    /// The mailto URI's ASCII serialization decoded as a `String`.
+    public var description: String {
+        String(decoding: serialized.underlying, as: UTF8.self)
+    }
+}
 
 extension RFC_6068.Mailto: Hashable {
     public func hash(into hasher: inout Hasher) {

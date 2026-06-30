@@ -12,6 +12,9 @@
 // ===----------------------------------------------------------------------===//
 
 public import ASCII_Serializer_Primitives
+public import Binary_Serializable_Primitives
+public import Parseable_ASCII_Primitives
+public import Serializer_Primitives
 
 extension RFC_6068.Mailto {
     /// A header field in a mailto URI
@@ -114,13 +117,32 @@ extension RFC_6068.Mailto.Header {
     }
 }
 
-// MARK: - Binary.ASCII.Serializable
+// MARK: - Serializable
 
-extension RFC_6068.Mailto.Header: Binary.ASCII.Serializable {
-    static public func serialize<Buffer>(
-        ascii header: RFC_6068.Mailto.Header,
+extension RFC_6068.Mailto.Header: Serializable, ASCII.Serializable, Binary.Serializable {
+    /// Canonical ASCII serializer for the RFC 6068 mailto header field.
+    public static var serializer: Serializer_Primitives.Serializer.Pure<Self, [ASCII.Code]> {
+        Serializer_Primitives.Serializer.Pure { header, buffer in
+            var bytes: [Byte] = []
+            serializeBytes(header, into: &bytes)
+            buffer.append(contentsOf: bytes.map { ASCII.Code(unchecked: $0) })
+        }
+    }
+
+    /// Explicit `Binary.Serializable` witness disambiguating the two
+    /// constraint-incomparable `serialize(_:into:)` defaults.
+    public static func serialize<Buffer: RangeReplaceableCollection>(
+        _ value: Self,
         into buffer: inout Buffer
-    ) where Buffer: RangeReplaceableCollection, Buffer.Element == Byte {
+    ) where Buffer.Element == Byte {
+        serializeBytes(value, into: &buffer)
+    }
+
+    /// Byte-domain serialization body (`hfname "=" hfvalue`, percent-encoded).
+    private static func serializeBytes<Buffer: RangeReplaceableCollection>(
+        _ header: Self,
+        into buffer: inout Buffer
+    ) where Buffer.Element == Byte {
 
         // Percent-encode name (RFC_3986 percentEncode returns [UInt8] — BSLI append bridges)
         buffer.append(
@@ -133,6 +155,15 @@ extension RFC_6068.Mailto.Header: Binary.ASCII.Serializable {
         buffer.append(
             contentsOf: RFC_3986.percentEncode(Array(header.value.utf8), allowing: .mailto.qchar)
         )
+    }
+}
+
+// MARK: - Parseable
+
+extension RFC_6068.Mailto.Header: ASCII.Parseable {
+    /// Creates a header field by validating `string`'s UTF-8 bytes.
+    public init(_ string: some StringProtocol) throws(Error) {
+        try self.init(ascii: [Byte](string.utf8))
     }
 
     /// Parses a header field from ASCII bytes (AUTHORITATIVE IMPLEMENTATION)
@@ -152,8 +183,7 @@ extension RFC_6068.Mailto.Header: Binary.ASCII.Serializable {
     /// - Parameter bytes: The header field as ASCII bytes
     /// - Throws: `Error` if parsing fails
     public init<Bytes: Collection>(
-        ascii bytes: Bytes,
-        in context: Void = ()
+        ascii bytes: Bytes
     ) throws(Error)
     where Bytes.Element == Byte {
         // Type-up: lift to ASCII.Code at the entry boundary so the body works
@@ -192,11 +222,24 @@ extension RFC_6068.Mailto.Header: Binary.ASCII.Serializable {
 
 // MARK: - Protocol Conformances
 
-extension RFC_6068.Mailto.Header: Binary.ASCII.RawRepresentable {
+extension RFC_6068.Mailto.Header: Swift.RawRepresentable {
     public typealias RawValue = String
+
+    /// The header field's ASCII serialization as a `String` (computed; derived
+    /// from serialization, not stored).
+    public var rawValue: String {
+        String(decoding: serialized.underlying, as: UTF8.self)
+    }
+
+    public init?(rawValue: String) { try? self.init(rawValue) }
 }
 
-extension RFC_6068.Mailto.Header: CustomStringConvertible {}
+extension RFC_6068.Mailto.Header: CustomStringConvertible {
+    /// The header field's ASCII serialization decoded as a `String`.
+    public var description: String {
+        String(decoding: serialized.underlying, as: UTF8.self)
+    }
+}
 
 extension RFC_6068.Mailto.Header: Hashable {
     public func hash(into hasher: inout Hasher) {
