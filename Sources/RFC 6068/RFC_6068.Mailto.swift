@@ -14,7 +14,6 @@
 public import ASCII_Serializer_Primitives
 public import Binary_Serializable_Primitives
 public import Parseable_ASCII_Primitives
-public import Serializer_Primitives
 
 extension RFC_6068 {
     /// A mailto URI as defined in RFC 6068
@@ -119,13 +118,45 @@ extension RFC_6068.Mailto {
 
 // MARK: - Serializable
 
-extension RFC_6068.Mailto: Serializable, ASCII.Serializable, Binary.Serializable {
-    /// Canonical ASCII serializer for the RFC 6068 mailto URI.
-    public static var serializer: Serializer_Primitives.Serializer.Pure<Self, [ASCII.Code]> {
-        Serializer_Primitives.Serializer.Pure { mailto, buffer in
-            var bytes: [Byte] = []
-            serializeBytes(mailto, into: &bytes)
-            buffer.append(contentsOf: bytes.map { ASCII.Code(unchecked: $0) })
+extension RFC_6068.Mailto: ASCII.Serializable, Binary.Serializable {
+    /// Own `ASCII.Serializable` verb ([FAM-012]) — the RFC 6068 mailto URI
+    /// (`"mailto:" [ to ] [ "?" hfields ]`). The `"mailto:"` scheme literal and the
+    /// `,` / `?` / `&` delimiters are leaf-emitted on the `ASCII.Code` substrate.
+    /// Each To address is serialized through the `RFC_5322.EmailAddress` verb into a
+    /// byte scratch, percent-encoded (`addr-spec`; the UInt8-substrate leaf whose
+    /// output is pure ASCII), then lifted to `ASCII.Code` — transform-over-verb-output.
+    /// Each header is composed through the re-cut `RFC_6068.Mailto.Header` ASCII verb.
+    /// Output is identical to the Binary witness body (`serializeBytes`).
+    public static func serialize<Buffer: RangeReplaceableCollection>(
+        _ value: Self,
+        into buffer: inout Buffer
+    ) where Buffer.Element == ASCII.Code {
+        // Scheme
+        buffer.append(contentsOf: "mailto:".utf8.map { ASCII.Code(unchecked: Byte($0)) })
+
+        // To addresses (percent-encoded, comma-separated) — serialize each address
+        // via its verb into a byte scratch, percent-encode, lift to ASCII.Code.
+        for (index, addr) in value.to.enumerated() {
+            if index > 0 {
+                buffer.append(ASCII.Code.comma)
+            }
+            var addrBytes: [Byte] = []
+            RFC_5322.EmailAddress.serialize(addr, into: &addrBytes)
+            buffer.append(
+                contentsOf: RFC_6068.Mailto.percentEncode(addrBytes.underlying)
+                    .map { ASCII.Code(unchecked: Byte($0)) }
+            )
+        }
+
+        // Headers — compose the re-cut Header ASCII verb.
+        if !value.headers.isEmpty {
+            buffer.append(ASCII.Code.questionMark)
+            for (index, header) in value.headers.enumerated() {
+                if index > 0 {
+                    buffer.append(ASCII.Code.ampersand)
+                }
+                RFC_6068.Mailto.Header.serialize(header, into: &buffer)
+            }
         }
     }
 
@@ -138,9 +169,10 @@ extension RFC_6068.Mailto: Serializable, ASCII.Serializable, Binary.Serializable
         serializeBytes(value, into: &buffer)
     }
 
-    /// Byte-domain serialization body (`"mailto:" [ to ] [ "?" hfields ]`). The
-    /// nested headers serialize via their own migrated family-Codable
-    /// `.serialized` ([Byte]).
+    /// Byte-domain serialization body (`"mailto:" [ to ] [ "?" hfields ]`). Each To
+    /// address is serialized through the `RFC_5322.EmailAddress` verb into a byte
+    /// scratch then percent-encoded; each header is composed through the re-cut
+    /// `RFC_6068.Mailto.Header` Binary verb.
     private static func serializeBytes<Buffer: RangeReplaceableCollection>(
         _ mailto: Self,
         into buffer: inout Buffer
@@ -148,23 +180,26 @@ extension RFC_6068.Mailto: Serializable, ASCII.Serializable, Binary.Serializable
         // Scheme
         buffer.append(contentsOf: "mailto:".utf8)
 
-        // To addresses (percent-encoded, comma-separated)
+        // To addresses (percent-encoded, comma-separated) — serialize via the address
+        // verb into a byte scratch, then percent-encode.
         for (index, addr) in mailto.to.enumerated() {
             if index > 0 {
                 buffer.append(ASCII.Code.comma)
             }
             // RFC_6068.Mailto.percentEncode returns [UInt8] — BSLI append bridges to Byte buffer
-            buffer.append(contentsOf: RFC_6068.Mailto.percentEncode(Array(addr.rawValue.utf8)))
+            var addrBytes: [Byte] = []
+            RFC_5322.EmailAddress.serialize(addr, into: &addrBytes)
+            buffer.append(contentsOf: RFC_6068.Mailto.percentEncode(addrBytes.underlying))
         }
 
-        // Headers
+        // Headers — compose the re-cut Header Binary verb.
         if !mailto.headers.isEmpty {
             buffer.append(ASCII.Code.questionMark)
             for (index, header) in mailto.headers.enumerated() {
                 if index > 0 {
                     buffer.append(ASCII.Code.ampersand)
                 }
-                buffer.append(contentsOf: header.serialized)
+                RFC_6068.Mailto.Header.serialize(header, into: &buffer)
             }
         }
     }
