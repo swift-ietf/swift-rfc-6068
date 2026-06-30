@@ -14,7 +14,6 @@
 public import ASCII_Serializer_Primitives
 public import Binary_Serializable_Primitives
 public import Parseable_ASCII_Primitives
-public import Serializer_Primitives
 
 extension RFC_6068.Mailto {
     /// A header field in a mailto URI
@@ -119,14 +118,31 @@ extension RFC_6068.Mailto.Header {
 
 // MARK: - Serializable
 
-extension RFC_6068.Mailto.Header: Serializable, ASCII.Serializable, Binary.Serializable {
-    /// Canonical ASCII serializer for the RFC 6068 mailto header field.
-    public static var serializer: Serializer_Primitives.Serializer.Pure<Self, [ASCII.Code]> {
-        Serializer_Primitives.Serializer.Pure { header, buffer in
-            var bytes: [Byte] = []
-            serializeBytes(header, into: &bytes)
-            buffer.append(contentsOf: bytes.map { ASCII.Code(unchecked: $0) })
-        }
+extension RFC_6068.Mailto.Header: ASCII.Serializable, Binary.Serializable {
+    /// Own `ASCII.Serializable` verb ([FAM-012]) — the RFC 6068
+    /// `hfname "=" hfvalue` header field. `RFC_3986.percentEncode` is a
+    /// UInt8-substrate leaf whose output is pure ASCII (`unreserved` / `%HH`);
+    /// each octet is lifted to `ASCII.Code` (the same percent-encode algorithm,
+    /// element type `Byte` -> `ASCII.Code`, no byte-detour). Output is identical
+    /// to the Binary witness body (`serializeBytes`).
+    public static func serialize<Buffer: RangeReplaceableCollection>(
+        _ value: Self,
+        into buffer: inout Buffer
+    ) where Buffer.Element == ASCII.Code {
+
+        // Percent-encode name. The leaf yields `[UInt8]`; lift each octet to ASCII.Code.
+        buffer.append(
+            contentsOf: RFC_3986.percentEncode(Array(value.name.utf8), allowing: .mailto.qchar)
+                .map { ASCII.Code(unchecked: Byte($0)) }
+        )
+
+        buffer.append(ASCII.Code.equalsSign)
+
+        // Percent-encode value (same leaf, lifted to ASCII.Code).
+        buffer.append(
+            contentsOf: RFC_3986.percentEncode(Array(value.value.utf8), allowing: .mailto.qchar)
+                .map { ASCII.Code(unchecked: Byte($0)) }
+        )
     }
 
     /// Explicit `Binary.Serializable` witness disambiguating the two
