@@ -1,4 +1,4 @@
-[![CI](https://github.com/swift-standards/swift-rfc-6068/workflows/CI/badge.svg)](https://github.com/swift-standards/swift-rfc-6068/actions/workflows/ci.yml)
+[![CI](https://github.com/swift-ietf/swift-rfc-6068/workflows/CI/badge.svg)](https://github.com/swift-ietf/swift-rfc-6068/actions/workflows/ci.yml)
 ![Development Status](https://img.shields.io/badge/status-active--development-blue.svg)
 
 # swift-rfc-6068
@@ -26,7 +26,7 @@ Add to your `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/swift-standards/swift-rfc-6068", from: "0.1.0")
+    .package(url: "https://github.com/swift-ietf/swift-rfc-6068", from: "0.2.5")
 ]
 ```
 
@@ -120,12 +120,12 @@ let bytes = [UInt8](mailto)
 
 | Package | Description |
 |---------|-------------|
-| [swift-rfc-3986](https://github.com/swift-standards/swift-rfc-3986) | URI Generic Syntax |
-| [swift-rfc-3987](https://github.com/swift-standards/swift-rfc-3987) | Internationalized Resource Identifiers (IRIs) |
-| [swift-rfc-5322](https://github.com/swift-standards/swift-rfc-5322) | Internet Message Format |
-| [swift-rfc-2369](https://github.com/swift-standards/swift-rfc-2369) | URLs for Mailing List Management |
-| [swift-rfc-8058](https://github.com/swift-standards/swift-rfc-8058) | One-Click Unsubscribe for List Email |
-| [swift-incits-4-1986](https://github.com/swift-standards/swift-incits-4-1986) | US-ASCII character operations |
+| [swift-rfc-3986](https://github.com/swift-ietf/swift-rfc-3986) | URI Generic Syntax |
+| [swift-rfc-3987](https://github.com/swift-ietf/swift-rfc-3987) | Internationalized Resource Identifiers (IRIs) |
+| [swift-rfc-5322](https://github.com/swift-ietf/swift-rfc-5322) | Internet Message Format |
+| [swift-rfc-2369](https://github.com/swift-ietf/swift-rfc-2369) | URLs for Mailing List Management |
+| [swift-rfc-8058](https://github.com/swift-ietf/swift-rfc-8058) | One-Click Unsubscribe for List Email |
+| [swift-incits-4-1986](https://github.com/swift-incits/swift-incits-4-1986) | US-ASCII character operations |
 
 ## License
 
