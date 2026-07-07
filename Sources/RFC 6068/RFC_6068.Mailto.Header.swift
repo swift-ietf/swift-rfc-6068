@@ -33,7 +33,7 @@ extension RFC_6068.Mailto {
     /// print(header.value)  // "Hello World"
     /// ```
     public struct Header: Sendable, Codable {
-        /// The header field name (e.g., "subject", "body", "cc")
+        /// The header field name, for example "subject", "body", or "cc"
         public let name: String
 
         /// The header field value (percent-decoded)
@@ -206,7 +206,7 @@ extension RFC_6068.Mailto.Header: ASCII.Parseable {
         // against ASCII.Code constants directly (RFC 6068 grammar is strict ASCII).
         let byteArray: [ASCII.Code]
         do {
-            byteArray = try Array<ASCII.Code>(bytes)
+            byteArray = try [ASCII.Code](bytes)
         } catch {
             throw Error.invalidPercentEncoding(String(decoding: bytes, as: UTF8.self))
         }
@@ -218,8 +218,8 @@ extension RFC_6068.Mailto.Header: ASCII.Parseable {
         }
 
         // Bridge to UInt8 for RFC_3986.percentDecode (UInt8-substrate upstream API)
-        let nameBytes = Array<UInt8>(byteArray[..<equalsIndex])
-        let valueBytes = Array<UInt8>(byteArray[(equalsIndex + 1)...])
+        let nameBytes = [UInt8](byteArray[..<equalsIndex])
+        let valueBytes = [UInt8](byteArray[(equalsIndex + 1)...])
 
         guard !nameBytes.isEmpty else {
             throw Error.emptyName(String(decoding: byteArray, as: UTF8.self))

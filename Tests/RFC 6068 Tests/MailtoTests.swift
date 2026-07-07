@@ -52,7 +52,9 @@ struct MailtoTests {
 
     @Test
     func `Parse mailto with multiple recipients`() throws {
-        let mailto = try RFC_6068.Mailto(ascii: Array("mailto:user1@example.com,user2@example.com".utf8))
+        let mailto = try RFC_6068.Mailto(
+            ascii: Array("mailto:user1@example.com,user2@example.com".utf8)
+        )
         #expect(mailto.to.count == 2)
     }
 

@@ -14,6 +14,7 @@
 /// RFC 6068: The 'mailto' URI Scheme
 ///
 /// This module provides Swift types for RFC 6068 compliant mailto URIs.
+///
 /// RFC 6068 obsoletes RFC 2368 and defines the mailto URI scheme with
 /// support for Internationalized Resource Identifiers (IRIs).
 ///

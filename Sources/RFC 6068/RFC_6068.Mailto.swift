@@ -239,7 +239,7 @@ extension RFC_6068.Mailto: ASCII.Parseable {
     where Bytes.Element == Byte {
         // Bridge to UInt8 once at entry — RFC_3986.percentDecode is UInt8-substrate,
         // so a single up-front conversion avoids per-element `.underlying` later.
-        let byteArray = Array<UInt8>(bytes)
+        let byteArray = [UInt8](bytes)
         guard !byteArray.isEmpty else { throw Error.empty }
 
         // Validate and strip scheme
@@ -295,12 +295,14 @@ extension RFC_6068.Mailto: ASCII.Parseable {
                 var trimmed = Array(addrStr.utf8)
                 while !trimmed.isEmpty,
                     let first = trimmed.first,
-                    ASCII.Code(first) == ASCII.Code.space || ASCII.Code(first) == ASCII.Code.htab {
+                    ASCII.Code(first) == ASCII.Code.space || ASCII.Code(first) == ASCII.Code.htab
+                {
                     trimmed.removeFirst()
                 }
                 while !trimmed.isEmpty,
                     let last = trimmed.last,
-                    ASCII.Code(last) == ASCII.Code.space || ASCII.Code(last) == ASCII.Code.htab {
+                    ASCII.Code(last) == ASCII.Code.space || ASCII.Code(last) == ASCII.Code.htab
+                {
                     trimmed.removeLast()
                 }
                 guard !trimmed.isEmpty else { continue }
@@ -332,7 +334,7 @@ extension RFC_6068.Mailto: ASCII.Parseable {
 
             for fieldBytes in headerFields {
                 // Header(ascii:) expects Byte — bridge UInt8 → Byte
-                if let header = try? Header(ascii: Array<Byte>(fieldBytes)) {
+                if let header = try? Header(ascii: [Byte](fieldBytes)) {
                     headers.append(header)
                 }
             }
