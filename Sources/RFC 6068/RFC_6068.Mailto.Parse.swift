@@ -137,7 +137,7 @@ extension RFC_6068.Mailto.Parse: Parser.`Protocol` {
     }
 
     @inlinable
-    static func _expectScheme(_ input: inout Input) throws(Failure) {
+    package static func _expectScheme(_ input: inout Input) throws(Failure) {
         // "mailto:" — 7 bytes, case-insensitive
         let expected: [UInt8] = [0x6D, 0x61, 0x69, 0x6C, 0x74, 0x6F, 0x3A]
         var idx = input.startIndex

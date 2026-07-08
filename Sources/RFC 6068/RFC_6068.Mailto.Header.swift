@@ -205,7 +205,7 @@ extension RFC_6068.Mailto.Header: ASCII.Parseable {
         // Type-up: lift to ASCII.Code at the entry boundary so the body works
         // against ASCII.Code constants directly (RFC 6068 grammar is strict ASCII).
         let byteArray: [ASCII.Code]
-        do {
+        do throws(ASCII.Code.Error) {
             byteArray = try [ASCII.Code](bytes)
         } catch {
             throw Error.invalidPercentEncoding(String(decoding: bytes, as: UTF8.self))

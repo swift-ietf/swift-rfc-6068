@@ -18,18 +18,20 @@ extension RFC_6068.Mailto.Header {
         case missingEquals(_ value: String)
         case emptyName(_ value: String)
         case invalidPercentEncoding(_ value: String)
+    }
+}
 
-        public var description: String {
-            switch self {
-            case .empty:
-                return "Header field cannot be empty"
-            case .missingEquals(let value):
-                return "Header field must contain '=': '\(value)'"
-            case .emptyName(let value):
-                return "Header field name cannot be empty: '\(value)'"
-            case .invalidPercentEncoding(let value):
-                return "Invalid percent encoding in header: '\(value)'"
-            }
+extension RFC_6068.Mailto.Header.Error {
+    public var description: String {
+        switch self {
+        case .empty:
+            return "Header field cannot be empty"
+        case .missingEquals(let value):
+            return "Header field must contain '=': '\(value)'"
+        case .emptyName(let value):
+            return "Header field name cannot be empty: '\(value)'"
+        case .invalidPercentEncoding(let value):
+            return "Invalid percent encoding in header: '\(value)'"
         }
     }
 }
