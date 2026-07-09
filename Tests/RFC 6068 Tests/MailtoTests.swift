@@ -15,8 +15,9 @@ import Testing
 
 @testable import RFC_6068
 
-@Suite("RFC 6068 Mailto Tests")
-struct MailtoTests {
+extension RFC_6068.Mailto {
+    @Suite("RFC 6068 Mailto Tests")
+    struct Test {
 
     @Test
     func `Parse simple mailto URI`() throws {
@@ -143,5 +144,6 @@ struct MailtoTests {
         #expect(throws: RFC_6068.Mailto.Error.self) {
             try RFC_6068.Mailto(ascii: Array("user@example.com".utf8))
         }
+    }
     }
 }
