@@ -141,7 +141,7 @@ extension RFC_6068.Mailto: ASCII.Serializable, Binary.Serializable {
                 buffer.append(ASCII.Code.comma)
             }
             var addrBytes: [Byte] = []
-            RFC_5322.EmailAddress.serialize(addr, into: &addrBytes)
+            RFC_6068.Mailto.serializeAddrSpec(addr, into: &addrBytes)
             buffer.append(
                 contentsOf: RFC_6068.Mailto.percentEncode(addrBytes.underlying)
                     .map { ASCII.Code(unchecked: Byte($0)) }
@@ -188,7 +188,7 @@ extension RFC_6068.Mailto: ASCII.Serializable, Binary.Serializable {
             }
             // RFC_6068.Mailto.percentEncode returns [UInt8] — BSLI append bridges to Byte buffer
             var addrBytes: [Byte] = []
-            RFC_5322.EmailAddress.serialize(addr, into: &addrBytes)
+            RFC_6068.Mailto.serializeAddrSpec(addr, into: &addrBytes)
             buffer.append(contentsOf: RFC_6068.Mailto.percentEncode(addrBytes.underlying))
         }
 
@@ -440,5 +440,26 @@ extension RFC_6068.Mailto {
         _ bytes: Bytes
     ) -> [UInt8] where Bytes.Element == UInt8 {
         RFC_3986.percentEncode(bytes, allowing: .mailto.addrSpec)
+    }
+}
+
+// MARK: - Addr-Spec Projection
+
+extension RFC_6068.Mailto {
+    /// Serializes only the addr-spec projection (`local-part "@" domain`) of an
+    /// RFC 5322 address into the mailto path.
+    ///
+    /// RFC 6068 Section 2 restricts the path's `to` production to `addr-spec` —
+    /// display names and angle brackets are not part of the grammar, so the full
+    /// `RFC_5322.EmailAddress` name-addr verb must not be used here. Composes the
+    /// upstream `LocalPart` / `RFC_1123.Domain` sub-part verbs rather than
+    /// re-deriving the addr-spec grammar locally.
+    static func serializeAddrSpec<Buffer: RangeReplaceableCollection>(
+        _ address: RFC_5322.EmailAddress,
+        into buffer: inout Buffer
+    ) where Buffer.Element == Byte {
+        RFC_5322.EmailAddress.LocalPart.serialize(address.localPart, into: &buffer)
+        buffer.append(ASCII.Code.commercialAt)
+        RFC_1123.Domain.serialize(address.domain, into: &buffer)
     }
 }
