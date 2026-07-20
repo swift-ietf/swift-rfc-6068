@@ -269,17 +269,20 @@ extension RFC_6068.Mailto: ASCII.Parseable {
         }
 
         // Parse To addresses from path
+        //
+        // RFC 6068 Section 2: `to = addr-spec *("," addr-spec)` — the comma
+        // separating addr-specs is a literal in the *encoded* path; any comma
+        // that is part of an addr-spec MUST be percent-encoded. Split the raw
+        // path on ',' FIRST, then percent-decode each segment independently.
         var toAddresses: [RFC_5322.EmailAddress] = []
         if !pathBytes.isEmpty {
-            let decodedPath = RFC_3986.percentDecode(pathBytes)
-
-            // Split on comma
-            var addressStrings: [String] = []
+            // Split the still-encoded path on comma
+            var encodedSegments: [[UInt8]] = []
             var current: [UInt8] = []
-            for byte in decodedPath {
+            for byte in pathBytes {
                 if ASCII.Code(byte) == ASCII.Code.comma {
                     if !current.isEmpty {
-                        addressStrings.append(String(decoding: current, as: UTF8.self))
+                        encodedSegments.append(current)
                         current = []
                     }
                 } else {
@@ -287,7 +290,12 @@ extension RFC_6068.Mailto: ASCII.Parseable {
                 }
             }
             if !current.isEmpty {
-                addressStrings.append(String(decoding: current, as: UTF8.self))
+                encodedSegments.append(current)
+            }
+
+            // Percent-decode each segment, then parse as an addr-spec
+            let addressStrings = encodedSegments.map { segment in
+                String(decoding: RFC_3986.percentDecode(segment), as: UTF8.self)
             }
 
             for addrStr in addressStrings {
