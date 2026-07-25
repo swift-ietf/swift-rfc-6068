@@ -1,7 +1,7 @@
-[![CI](https://github.com/swift-ietf/swift-rfc-6068/workflows/CI/badge.svg)](https://github.com/swift-ietf/swift-rfc-6068/actions/workflows/ci.yml)
-![Development Status](https://img.shields.io/badge/status-active--development-blue.svg)
-
 # swift-rfc-6068
+
+![Development Status](https://img.shields.io/badge/status-active--development-blue.svg)
+[![CI](https://github.com/swift-ietf/swift-rfc-6068/workflows/CI/badge.svg)](https://github.com/swift-ietf/swift-rfc-6068/actions/workflows/ci.yml)
 
 A Swift implementation of [RFC 6068](https://www.rfc-editor.org/rfc/rfc6068) - The 'mailto' URI Scheme.
 
