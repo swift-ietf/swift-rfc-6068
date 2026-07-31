@@ -33,7 +33,10 @@ extension RFC_6068.Mailto {
         }
 
         @Test
-        func `Literal comma still separates recipients when one addr-spec carries an encoded comma`() throws {
+        func
+            `Literal comma still separates recipients when one addr-spec carries an encoded comma`()
+            throws
+        {
             let mailto = try RFC_6068.Mailto(
                 ascii: Array("mailto:a@example.com,%22x%2Cy%22@example.org".utf8)
             )
@@ -45,14 +48,16 @@ extension RFC_6068.Mailto {
         // MARK: - F-003: path serialization is restricted to addr-spec
 
         @Test
-        func `Serialization of a display-name address emits only the addr-spec in the path`() throws {
+        func `Serialization of a display-name address emits only the addr-spec in the path`() throws
+        {
             let address = try RFC_5322.EmailAddress("Jane Doe <jane@example.com>")
             let mailto = try RFC_6068.Mailto(to: [address])
             #expect(mailto.rawValue == "mailto:jane@example.com")
         }
 
         @Test
-        func `Display-name address round-trips through serialization to the same addr-spec`() throws {
+        func `Display-name address round-trips through serialization to the same addr-spec`() throws
+        {
             let address = try RFC_5322.EmailAddress("Jane Doe <jane@example.com>")
             let mailto = try RFC_6068.Mailto(to: [address])
             let reparsed = try RFC_6068.Mailto(ascii: Array(mailto.rawValue.utf8))
