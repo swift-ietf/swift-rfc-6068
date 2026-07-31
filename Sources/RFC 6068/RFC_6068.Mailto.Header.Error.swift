@@ -26,10 +26,13 @@ extension RFC_6068.Mailto.Header.Error {
         switch self {
         case .empty:
             return "Header field cannot be empty"
+
         case .missingEquals(let value):
             return "Header field must contain '=': '\(value)'"
+
         case .emptyName(let value):
             return "Header field name cannot be empty: '\(value)'"
+
         case .invalidPercentEncoding(let value):
             return "Invalid percent encoding in header: '\(value)'"
         }

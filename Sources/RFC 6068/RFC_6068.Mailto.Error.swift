@@ -27,12 +27,16 @@ extension RFC_6068.Mailto.Error {
         switch self {
         case .empty:
             return "mailto URI cannot be empty"
+
         case .missingScheme(let value):
             return "mailto URI must start with 'mailto:': '\(value)'"
+
         case .invalidEmailAddress(let value):
             return "Invalid email address in mailto URI: '\(value)'"
+
         case .invalidHeader(let value):
             return "Invalid header in mailto URI: '\(value)'"
+
         case .invalidPercentEncoding(let value):
             return "Invalid percent encoding in mailto URI: '\(value)'"
         }

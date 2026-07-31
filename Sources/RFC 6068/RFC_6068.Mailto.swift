@@ -94,8 +94,9 @@ extension RFC_6068.Mailto {
     public var allTo: [RFC_5322.EmailAddress] {
         var result = to
         for header in headers where header.name.lowercased() == "to" {
-            if let addr = try? RFC_5322.EmailAddress(header.value) {
-                result.append(addr)
+            do throws(RFC_5322.EmailAddress.Error) {
+                result.append(try RFC_5322.EmailAddress(header.value))
+            } catch {
             }
         }
         return result
@@ -105,14 +106,26 @@ extension RFC_6068.Mailto {
     public var cc: [RFC_5322.EmailAddress] {
         headers
             .filter { $0.name.lowercased() == "cc" }
-            .compactMap { try? RFC_5322.EmailAddress($0.value) }
+            .compactMap { header in
+                do throws(RFC_5322.EmailAddress.Error) {
+                    return try RFC_5322.EmailAddress(header.value)
+                } catch {
+                    return nil
+                }
+            }
     }
 
     /// Bcc addresses from headers
     public var bcc: [RFC_5322.EmailAddress] {
         headers
             .filter { $0.name.lowercased() == "bcc" }
-            .compactMap { try? RFC_5322.EmailAddress($0.value) }
+            .compactMap { header in
+                do throws(RFC_5322.EmailAddress.Error) {
+                    return try RFC_5322.EmailAddress(header.value)
+                } catch {
+                    return nil
+                }
+            }
     }
 }
 
@@ -314,8 +327,11 @@ extension RFC_6068.Mailto: ASCII.Parseable {
                     trimmed.removeLast()
                 }
                 guard !trimmed.isEmpty else { continue }
-                if let addr = try? RFC_5322.EmailAddress(String(decoding: trimmed, as: UTF8.self)) {
-                    toAddresses.append(addr)
+                do throws(RFC_5322.EmailAddress.Error) {
+                    toAddresses.append(
+                        try RFC_5322.EmailAddress(String(decoding: trimmed, as: UTF8.self))
+                    )
+                } catch {
                 }
             }
         }
@@ -342,8 +358,9 @@ extension RFC_6068.Mailto: ASCII.Parseable {
 
             for fieldBytes in headerFields {
                 // Header(ascii:) expects Byte — bridge UInt8 → Byte
-                if let header = try? Header(ascii: [Byte](fieldBytes)) {
-                    headers.append(header)
+                do throws(Header.Error) {
+                    headers.append(try Header(ascii: [Byte](fieldBytes)))
+                } catch {
                 }
             }
         }
@@ -363,7 +380,13 @@ extension RFC_6068.Mailto: Swift.RawRepresentable {
         String(decoding: serialized.underlying, as: UTF8.self)
     }
 
-    public init?(rawValue: String) { try? self.init(rawValue) }
+    public init?(rawValue: String) {
+        do throws(Error) {
+            try self.init(rawValue)
+        } catch {
+            return nil
+        }
+    }
 }
 
 extension RFC_6068.Mailto: CustomStringConvertible {
