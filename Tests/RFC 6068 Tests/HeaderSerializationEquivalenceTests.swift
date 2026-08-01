@@ -14,7 +14,12 @@ import Testing
 
 @Suite
 struct `Header Serialization Equivalence` {
+    @Suite struct Unit {}
+    @Suite struct `Edge Case` {}
+    @Suite struct Integration {}
+}
 
+extension `Header Serialization Equivalence`.Unit {
     @Test
     func `ASCII verb output equals Binary witness output for the percent-encode path`() throws {
         // A name and value containing reserved characters (space, `&`) force the

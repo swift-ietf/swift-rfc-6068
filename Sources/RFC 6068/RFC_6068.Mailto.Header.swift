@@ -62,6 +62,8 @@ extension RFC_6068.Mailto {
                 throw Error.emptyName("name cannot be empty")
             }
             self.init(
+                // swift-linter:disable:next unchecked call site
+                // REASON: same-package extension-init internal use — the emptiness invariant was just validated above.
                 __unchecked: (),
                 name: name,
                 value: value
@@ -198,7 +200,7 @@ extension RFC_6068.Mailto.Header: ASCII.Parseable {
     ///
     /// - Parameter bytes: The header field as ASCII bytes
     /// - Throws: `Error` if parsing fails
-    public init<Bytes: Collection>(
+    public init<Bytes: Swift.Collection>(
         ascii bytes: Bytes
     ) throws(Error)
     where Bytes.Element == Byte {

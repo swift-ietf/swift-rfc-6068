@@ -29,6 +29,8 @@ extension RFC_6068.Mailto {
                 ascii: Array("mailto:%22ab%2Ccd%22@example.com".utf8)
             )
             #expect(mailto.to.count == 1)
+            // swift-linter:disable:next raw value access
+            // REASON: test asserts the RawRepresentable `rawValue` contract directly.
             #expect(mailto.to.first?.rawValue == "\"ab,cd\"@example.com")
         }
 
@@ -41,7 +43,11 @@ extension RFC_6068.Mailto {
                 ascii: Array("mailto:a@example.com,%22x%2Cy%22@example.org".utf8)
             )
             #expect(mailto.to.count == 2)
+            // swift-linter:disable:next raw value access
+            // REASON: test asserts the RawRepresentable `rawValue` contract directly.
             #expect(mailto.to.first?.rawValue == "a@example.com")
+            // swift-linter:disable:next raw value access
+            // REASON: test asserts the RawRepresentable `rawValue` contract directly.
             #expect(mailto.to.last?.rawValue == "\"x,y\"@example.org")
         }
 
@@ -52,6 +58,8 @@ extension RFC_6068.Mailto {
         {
             let address = try RFC_5322.EmailAddress("Jane Doe <jane@example.com>")
             let mailto = try RFC_6068.Mailto(to: [address])
+            // swift-linter:disable:next raw value access
+            // REASON: test asserts the RawRepresentable `rawValue` contract directly.
             #expect(mailto.rawValue == "mailto:jane@example.com")
         }
 
@@ -60,6 +68,10 @@ extension RFC_6068.Mailto {
         {
             let address = try RFC_5322.EmailAddress("Jane Doe <jane@example.com>")
             let mailto = try RFC_6068.Mailto(to: [address])
+            // swift-linter:disable:next raw value access
+            // REASON: test asserts the RawRepresentable `rawValue` contract directly.
+            // swift-linter:disable:next chained rawvalue access
+            // REASON: test asserts the RawRepresentable `rawValue` contract directly; `.rawValue.utf8` round-trips the canonical text through parsing.
             let reparsed = try RFC_6068.Mailto(ascii: Array(mailto.rawValue.utf8))
             #expect(reparsed.to.count == 1)
             #expect(reparsed.to.first?.localPart == address.localPart)

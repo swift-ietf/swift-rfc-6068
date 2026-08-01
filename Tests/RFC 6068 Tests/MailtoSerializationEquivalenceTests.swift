@@ -15,7 +15,12 @@ import Testing
 
 @Suite
 struct `Mailto Serialization Equivalence` {
+    @Suite struct Unit {}
+    @Suite struct `Edge Case` {}
+    @Suite struct Integration {}
+}
 
+extension `Mailto Serialization Equivalence`.Unit {
     @Test
     func `ASCII verb output equals Binary witness output for the percent-encode path`() throws {
         // A display-name To address forces the addr-spec percent-encode branch

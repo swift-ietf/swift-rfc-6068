@@ -25,37 +25,12 @@ extension RFC_6068.Mailto {
 }
 
 extension RFC_6068.Mailto.Parse {
-    public struct HeaderField: Sendable {
-        public let name: Input
-        public let value: Input
-
-        @inlinable
-        public init(name: Input, value: Input) {
-            self.name = name
-            self.value = value
-        }
-    }
-
-    public struct Output: Sendable {
-        /// Raw address segments (comma-separated in the path component)
-        public let addresses: [Input]
-        /// Parsed header fields from the query component
-        public let headers: [HeaderField]
-
-        @inlinable
-        public init(addresses: [Input], headers: [HeaderField]) {
-            self.addresses = addresses
-            self.headers = headers
-        }
-    }
-
-    public enum Error: Swift.Error, Sendable, Equatable {
-        case expectedMailtoScheme
-    }
+    public typealias Error = __RFC_6068_Mailto_Parse_Error
 }
 
 extension RFC_6068.Mailto.Parse: Parser.`Protocol` {
-    public typealias Failure = RFC_6068.Mailto.Parse<Input>.Error
+    public typealias Failure = __RFC_6068_Mailto_Parse_Error
+    public typealias Body = Never
 
     @inlinable
     public func parse(_ input: inout Input) throws(Failure) -> Output {
