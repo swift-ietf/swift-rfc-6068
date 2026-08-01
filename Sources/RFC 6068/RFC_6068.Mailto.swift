@@ -408,4 +408,3 @@ extension RFC_6068.Mailto: Hashable {
         lhs.to == rhs.to && lhs.headers == rhs.headers
     }
 }
-
