@@ -1,4 +1,4 @@
-// swift-tools-version: 6.3.3
+// swift-tools-version: 6.4
 
 import PackageDescription
 
@@ -11,7 +11,9 @@ extension Target.Dependency {
 }
 
 extension Target.Dependency {
-    static var incits41986: Self { .product(name: "ASCII Serializer Primitives", package: "swift-ascii-serializer-primitives") }
+    static var incits41986: Self {
+        .product(name: "ASCII Serializer Primitives", package: "swift-ascii-serializer-primitives")
+    }
     static var rfc3986: Self { .product(name: "RFC 3986", package: "swift-rfc-3986") }
     static var rfc5322: Self { .product(name: "RFC 5322", package: "swift-rfc-5322") }
 }
@@ -19,20 +21,26 @@ extension Target.Dependency {
 let package = Package(
     name: "swift-rfc-6068",
     platforms: [
-        .macOS("27"),
-        .iOS("27"),
-        .tvOS("27"),
-        .watchOS("27")
+        .macOS(.v27),
+        .iOS(.v27),
+        .tvOS(.v27),
+        .watchOS(.v27),
     ],
     products: [
         .library(name: "RFC 6068", targets: ["RFC 6068"]),
-        .library(name: .rfc6068.foundation, targets: [.rfc6068.foundation])
+        .library(name: .rfc6068.foundation, targets: [.rfc6068.foundation]),
     ],
     dependencies: [
-        .package(url: "https://github.com/swift-primitives/swift-ascii-serializer-primitives.git", branch: "main"),
+        .package(
+            url: "https://github.com/swift-primitives/swift-ascii-serializer-primitives.git",
+            branch: "main"
+        ),
         .package(url: "https://github.com/swift-ietf/swift-rfc-3986.git", branch: "main"),
         .package(url: "https://github.com/swift-ietf/swift-rfc-5322.git", branch: "main"),
-        .package(url: "https://github.com/swift-primitives/swift-parser-primitives.git", branch: "main")
+        .package(
+            url: "https://github.com/swift-primitives/swift-parser-primitives.git",
+            branch: "main"
+        ),
     ],
     targets: [
         .target(
@@ -41,7 +49,7 @@ let package = Package(
                 .incits41986,
                 .rfc3986,
                 .rfc5322,
-                .product(name: "Parser Primitives", package: "swift-parser-primitives")
+                .product(name: "Parser Primitives", package: "swift-parser-primitives"),
             ]
         ),
         .target(
@@ -53,13 +61,13 @@ let package = Package(
         .testTarget(
             name: "RFC 6068 Foundation Tests",
             dependencies: [
-                "RFC 6068",
+                "RFC 6068"
             ]
         ),
         .testTarget(
             name: "RFC 6068 Tests",
             dependencies: [
-                "RFC 6068",
+                "RFC 6068"
             ]
         ),
     ],
