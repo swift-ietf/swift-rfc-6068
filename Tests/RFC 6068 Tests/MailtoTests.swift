@@ -1,16 +1,3 @@
-// ===----------------------------------------------------------------------===//
-//
-// This source file is part of the swift-rfc-6068 open source project
-//
-// Copyright (c) 2025 Coen ten Thije Boonkkamp
-// Licensed under Apache License v2.0
-//
-// See LICENSE.txt for license information
-//
-// SPDX-License-Identifier: Apache-2.0
-//
-// ===----------------------------------------------------------------------===//
-
 import Testing
 
 @testable import RFC_6068
@@ -23,8 +10,7 @@ extension RFC_6068.Mailto {
         func `Parse simple mailto URI`() throws {
             let mailto = try RFC_6068.Mailto(ascii: Array("mailto:user@example.com".utf8))
             #expect(mailto.to.count == 1)
-            // swift-linter:disable:next raw value access
-            // REASON: test asserts the RawRepresentable `rawValue` contract directly.
+
             #expect(mailto.to.first?.rawValue == "user@example.com")
             #expect(mailto.headers.isEmpty)
         }
@@ -111,29 +97,27 @@ extension RFC_6068.Mailto {
 
         @Test
         func `RFC 6068 example: simple mailto`() throws {
-            // RFC 6068 Section 6.1
+
             let mailto = try RFC_6068.Mailto(ascii: Array("mailto:chris@example.com".utf8))
             #expect(mailto.to.count == 1)
-            // swift-linter:disable:next raw value access
-            // REASON: test asserts the RawRepresentable `rawValue` contract directly.
+
             #expect(mailto.to.first?.rawValue == "chris@example.com")
         }
 
         @Test
         func `RFC 6068 example: with subject`() throws {
-            // RFC 6068 Section 6.2
+
             let mailto = try RFC_6068.Mailto(
                 ascii: Array("mailto:infobot@example.com?subject=current-issue".utf8)
             )
-            // swift-linter:disable:next raw value access
-            // REASON: test asserts the RawRepresentable `rawValue` contract directly.
+
             #expect(mailto.to.first?.rawValue == "infobot@example.com")
             #expect(mailto.subject == "current-issue")
         }
 
         @Test
         func `RFC 6068 example: with body`() throws {
-            // RFC 6068 Section 6.3
+
             let mailto = try RFC_6068.Mailto(
                 ascii: Array("mailto:infobot@example.com?body=send%20current-issue".utf8)
             )

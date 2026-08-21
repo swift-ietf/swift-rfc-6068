@@ -1,22 +1,7 @@
-//
-//  RFC_6068.Mailto.Parse.swift
-//  swift-rfc-6068
-//
-//  Mailto URI: "mailto:" [to] ["?" hfields]
-//
-
 public import Parser_Primitives
 
 extension RFC_6068.Mailto {
-    /// Parses a mailto URI per RFC 6068 Section 2.
-    ///
-    /// `mailtoURI = "mailto:" [ to ] [ hfields ]`
-    /// `to        = addr-spec *("," addr-spec)`
-    /// `hfields   = "?" hfield *("&" hfield)`
-    /// `hfield    = hfname "=" hfvalue`
-    ///
-    /// Returns the raw path (addresses) and query (headers) byte slices.
-    /// Percent-decoding and addr-spec parsing are left to the caller.
+
     public struct Parse<Input: Collection.Slice.`Protocol`>: Sendable
     where Input: Sendable, Input.Element == UInt8 {
         @inlinable
@@ -34,15 +19,14 @@ extension RFC_6068.Mailto.Parse: Parser.`Protocol` {
 
     @inlinable
     public func parse(_ input: inout Input) throws(Failure) -> Output {
-        // Case-insensitive match for "mailto:" (7 bytes)
+
         try Self._expectScheme(&input)
 
-        // Split remaining at '?' into path and query
         var pathEnd = input.startIndex
         var questionMark: Input.Index? = nil
         var idx = input.startIndex
         while idx < input.endIndex {
-            if input[idx] == 0x3F {  // ?
+            if input[idx] == 0x3F {
                 questionMark = idx
                 break
             }
@@ -50,14 +34,13 @@ extension RFC_6068.Mailto.Parse: Parser.`Protocol` {
         }
         pathEnd = questionMark ?? input.endIndex
 
-        // Parse addresses from path (split on ',')
         var addresses: [Input] = []
         let pathSlice = input[input.startIndex..<pathEnd]
         if pathSlice.startIndex < pathSlice.endIndex {
             var segStart = pathSlice.startIndex
             var segIdx = pathSlice.startIndex
             while segIdx < pathSlice.endIndex {
-                if pathSlice[segIdx] == 0x2C {  // ,
+                if pathSlice[segIdx] == 0x2C {
                     if segIdx > segStart {
                         addresses.append(pathSlice[segStart..<segIdx])
                     }
@@ -72,7 +55,6 @@ extension RFC_6068.Mailto.Parse: Parser.`Protocol` {
             }
         }
 
-        // Parse headers from query (split on '&', then '=')
         var headers: [HeaderField] = []
         if let qm = questionMark {
             let queryStart = input.index(after: qm)
@@ -82,11 +64,11 @@ extension RFC_6068.Mailto.Parse: Parser.`Protocol` {
             var fieldIdx = querySlice.startIndex
             while fieldIdx <= querySlice.endIndex {
                 let atEnd = fieldIdx == querySlice.endIndex
-                let atAmpersand = !atEnd && querySlice[fieldIdx] == 0x26  // &
+                let atAmpersand = !atEnd && querySlice[fieldIdx] == 0x26
 
                 if atEnd || atAmpersand {
                     let fieldSlice = querySlice[fieldStart..<fieldIdx]
-                    // Split field at '='
+
                     var eqIdx = fieldSlice.startIndex
                     while eqIdx < fieldSlice.endIndex && fieldSlice[eqIdx] != 0x3D {
                         fieldSlice.formIndex(after: &eqIdx)
@@ -113,13 +95,13 @@ extension RFC_6068.Mailto.Parse: Parser.`Protocol` {
 
     @inlinable
     package static func _expectScheme(_ input: inout Input) throws(Failure) {
-        // "mailto:" — 7 bytes, case-insensitive
+
         let expected: [UInt8] = [0x6D, 0x61, 0x69, 0x6C, 0x74, 0x6F, 0x3A]
         var idx = input.startIndex
         for exp in expected {
             guard idx < input.endIndex else { throw .expectedMailtoScheme }
             let byte = input[idx]
-            // Case-insensitive for letters (0x3A is colon, not a letter)
+
             let lower = (byte >= 0x41 && byte <= 0x5A) ? (byte | 0x20) : byte
             guard lower == exp else { throw .expectedMailtoScheme }
             input.formIndex(after: &idx)

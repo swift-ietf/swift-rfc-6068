@@ -1,56 +1,15 @@
-// ===----------------------------------------------------------------------===//
-//
-// This source file is part of the swift-rfc-6068 open source project
-//
-// Copyright (c) 2025 Coen ten Thije Boonkkamp
-// Licensed under Apache License v2.0
-//
-// See LICENSE.txt for license information
-//
-// SPDX-License-Identifier: Apache-2.0
-//
-// ===----------------------------------------------------------------------===//
-
 public import ASCII_Serializer_Primitives
 public import Binary_Serializable_Primitives
 public import Parseable_ASCII_Primitives
 
 extension RFC_6068 {
-    /// A mailto URI as defined in RFC 6068
-    ///
-    /// The mailto URI scheme designates an Internet mailing address for
-    /// the purposes of composing a message.
-    ///
-    /// ## ABNF Grammar (RFC 6068 Section 2)
-    ///
-    /// ```
-    /// mailtoURI = "mailto:" [ to ] [ hfields ]
-    /// to        = addr-spec *("," addr-spec)
-    /// hfields   = "?" hfield *("&" hfield)
-    /// hfield    = hfname "=" hfvalue
-    /// ```
-    ///
-    /// ## Example
-    ///
-    /// ```swift
-    /// // Simple mailto
-    /// let mailto = try RFC_6068.Mailto(ascii: "mailto:user@example.com".utf8)
-    ///
-    /// // With subject and body
-    /// let mailto = try RFC_6068.Mailto(
-    ///     ascii: "mailto:user@example.com?subject=Hello&body=World".utf8
-    /// )
-    /// ```
+
     public struct Mailto: Sendable, Codable {
-        /// The recipient email addresses (from the path component)
+
         public let to: [RFC_5322.EmailAddress]
 
-        /// The header fields (from the query component)
         public let headers: [Header]
 
-        /// Creates a mailto URI WITHOUT validation
-        ///
-        /// Private to ensure all public construction goes through validation.
         private init(
             __unchecked: Void,
             to: [RFC_5322.EmailAddress],
@@ -60,39 +19,26 @@ extension RFC_6068 {
             self.headers = headers
         }
 
-        /// Creates a new mailto URI
-        ///
-        /// - Parameters:
-        ///   - to: The recipient email addresses
-        ///   - headers: Optional header fields (subject, body, cc, etc.)
-        /// - Throws: `Error` if validation fails
         public init(
             to: [RFC_5322.EmailAddress] = [],
             headers: [Header] = []
         ) throws(Error) {
-            // Validation: must have at least one recipient or one header
-            // (empty mailto: is technically valid per RFC 6068, so no validation needed currently)
-            // swift-linter:disable:next unchecked call site
-            // REASON: same-package extension-init internal use — no invariant to check per RFC 6068 (empty mailto: is valid).
+
             self.init(__unchecked: (), to: to, headers: headers)
         }
     }
 }
 
-// MARK: - Convenience Accessors
-
 extension RFC_6068.Mailto {
-    /// The subject header value, if present
+
     public var subject: String? {
         headers.first { $0.name.lowercased() == "subject" }?.value
     }
 
-    /// The body header value, if present
     public var body: String? {
         headers.first { $0.name.lowercased() == "body" }?.value
     }
 
-    /// Additional To addresses from headers (combined with path To addresses)
     public var allTo: [RFC_5322.EmailAddress] {
         var result = to
         for header in headers where header.name.lowercased() == "to" {
@@ -104,7 +50,6 @@ extension RFC_6068.Mailto {
         return result
     }
 
-    /// Cc addresses from headers
     public var cc: [RFC_5322.EmailAddress] {
         headers
             .filter { $0.name.lowercased() == "cc" }
@@ -117,7 +62,6 @@ extension RFC_6068.Mailto {
             }
     }
 
-    /// Bcc addresses from headers
     public var bcc: [RFC_5322.EmailAddress] {
         headers
             .filter { $0.name.lowercased() == "bcc" }
@@ -131,26 +75,15 @@ extension RFC_6068.Mailto {
     }
 }
 
-// MARK: - Serializable
-
 extension RFC_6068.Mailto: ASCII.Serializable, Binary.Serializable {
-    /// Own `ASCII.Serializable` verb ([FAM-012]) — the RFC 6068 mailto URI
-    /// (`"mailto:" [ to ] [ "?" hfields ]`). The `"mailto:"` scheme literal and the
-    /// `,` / `?` / `&` delimiters are leaf-emitted on the `ASCII.Code` substrate.
-    /// Each To address is serialized through the `RFC_5322.EmailAddress` verb into a
-    /// byte scratch, percent-encoded (`addr-spec`; the UInt8-substrate leaf whose
-    /// output is pure ASCII), then lifted to `ASCII.Code` — transform-over-verb-output.
-    /// Each header is composed through the re-cut `RFC_6068.Mailto.Header` ASCII verb.
-    /// Output is identical to the Binary witness body (`serializeBytes`).
+
     public static func serialize<Buffer: RangeReplaceableCollection>(
         _ value: Self,
         into buffer: inout Buffer
     ) where Buffer.Element == ASCII.Code {
-        // Scheme
+
         buffer.append(contentsOf: "mailto:".utf8.map { ASCII.Code(unchecked: Byte($0)) })
 
-        // To addresses (percent-encoded, comma-separated) — serialize each address
-        // via its verb into a byte scratch, percent-encode, lift to ASCII.Code.
         for (index, addr) in value.to.enumerated() {
             if index > 0 {
                 buffer.append(ASCII.Code.comma)
@@ -163,7 +96,6 @@ extension RFC_6068.Mailto: ASCII.Serializable, Binary.Serializable {
             )
         }
 
-        // Headers — compose the re-cut Header ASCII verb.
         if !value.headers.isEmpty {
             buffer.append(ASCII.Code.questionMark)
             for (index, header) in value.headers.enumerated() {
@@ -175,8 +107,6 @@ extension RFC_6068.Mailto: ASCII.Serializable, Binary.Serializable {
         }
     }
 
-    /// Explicit `Binary.Serializable` witness disambiguating the two
-    /// constraint-incomparable `serialize(_:into:)` defaults.
     public static func serialize<Buffer: RangeReplaceableCollection>(
         _ value: Self,
         into buffer: inout Buffer
@@ -184,30 +114,23 @@ extension RFC_6068.Mailto: ASCII.Serializable, Binary.Serializable {
         serializeBytes(value, into: &buffer)
     }
 
-    /// Byte-domain serialization body (`"mailto:" [ to ] [ "?" hfields ]`). Each To
-    /// address is serialized through the `RFC_5322.EmailAddress` verb into a byte
-    /// scratch then percent-encoded; each header is composed through the re-cut
-    /// `RFC_6068.Mailto.Header` Binary verb.
     private static func serializeBytes<Buffer: RangeReplaceableCollection>(
         _ mailto: Self,
         into buffer: inout Buffer
     ) where Buffer.Element == Byte {
-        // Scheme
+
         buffer.append(contentsOf: "mailto:".utf8)
 
-        // To addresses (percent-encoded, comma-separated) — serialize via the address
-        // verb into a byte scratch, then percent-encode.
         for (index, addr) in mailto.to.enumerated() {
             if index > 0 {
                 buffer.append(ASCII.Code.comma)
             }
-            // RFC_6068.Mailto.percentEncode returns [UInt8] — BSLI append bridges to Byte buffer
+
             var addrBytes: [Byte] = []
             RFC_6068.Mailto.serializeAddrSpec(addr, into: &addrBytes)
             buffer.append(contentsOf: RFC_6068.Mailto.percentEncode(addrBytes.underlying))
         }
 
-        // Headers — compose the re-cut Header Binary verb.
         if !mailto.headers.isEmpty {
             buffer.append(ASCII.Code.questionMark)
             for (index, header) in mailto.headers.enumerated() {
@@ -220,44 +143,18 @@ extension RFC_6068.Mailto: ASCII.Serializable, Binary.Serializable {
     }
 }
 
-// MARK: - Parseable
-
 extension RFC_6068.Mailto: ASCII.Parseable {
-    /// Creates a mailto URI by validating `string`'s UTF-8 bytes.
+
     public init(_ string: some StringProtocol) throws(Error) {
         try self.init(ascii: [Byte](string.utf8))
     }
 
-    /// Parses a mailto URI from ASCII bytes (AUTHORITATIVE IMPLEMENTATION)
-    ///
-    /// ## RFC 6068 Section 2
-    ///
-    /// ```
-    /// mailtoURI = "mailto:" [ to ] [ hfields ]
-    /// ```
-    ///
-    /// ## Category Theory
-    ///
-    /// Parsing transformation:
-    /// - **Domain**: [Byte] (ASCII bytes)
-    /// - **Codomain**: RFC_6068.Mailto (structured data)
-    ///
-    /// ## Example
-    ///
-    /// ```swift
-    /// let mailto = try RFC_6068.Mailto(ascii: Array<Byte>("mailto:user@example.com".utf8))
-    /// ```
-    ///
-    /// - Parameter bytes: The mailto URI as ASCII bytes
-    /// - Throws: `Error` if parsing fails
     public init<Bytes: Swift.Collection>(ascii bytes: Bytes) throws(Error)
     where Bytes.Element == Byte {
-        // Bridge to UInt8 once at entry — RFC_3986.percentDecode is UInt8-substrate,
-        // so a single up-front conversion avoids per-element `.underlying` later.
+
         let byteArray = [UInt8](bytes)
         guard !byteArray.isEmpty else { throw Error.empty }
 
-        // Validate and strip scheme
         let scheme = Array("mailto:".utf8)
         guard byteArray.count >= scheme.count else {
             throw Error.missingScheme(String(decoding: byteArray, as: UTF8.self))
@@ -269,7 +166,6 @@ extension RFC_6068.Mailto: ASCII.Parseable {
         }
         let remainder = Array(byteArray.dropFirst(scheme.count))
 
-        // Split into path and query components (UInt8 domain — RFC_3986 boundary)
         var pathBytes: [UInt8] = []
         var queryBytes: [UInt8] = []
         var inQuery = false
@@ -283,15 +179,9 @@ extension RFC_6068.Mailto: ASCII.Parseable {
             }
         }
 
-        // Parse To addresses from path
-        //
-        // RFC 6068 Section 2: `to = addr-spec *("," addr-spec)` — the comma
-        // separating addr-specs is a literal in the *encoded* path; any comma
-        // that is part of an addr-spec MUST be percent-encoded. Split the raw
-        // path on ',' FIRST, then percent-decode each segment independently.
         var toAddresses: [RFC_5322.EmailAddress] = []
         if !pathBytes.isEmpty {
-            // Split the still-encoded path on comma
+
             var encodedSegments: [[UInt8]] = []
             var current: [UInt8] = []
             for byte in pathBytes {
@@ -308,13 +198,12 @@ extension RFC_6068.Mailto: ASCII.Parseable {
                 encodedSegments.append(current)
             }
 
-            // Percent-decode each segment, then parse as an addr-spec
             let addressStrings = encodedSegments.map { segment in
                 String(decoding: RFC_3986.percentDecode(segment), as: UTF8.self)
             }
 
             for addrStr in addressStrings {
-                // Trim whitespace
+
                 var trimmed = Array(addrStr.utf8)
                 while !trimmed.isEmpty,
                     let first = trimmed.first,
@@ -338,10 +227,9 @@ extension RFC_6068.Mailto: ASCII.Parseable {
             }
         }
 
-        // Parse headers from query
         var headers: [Header] = []
         if !queryBytes.isEmpty {
-            // Split on ampersand
+
             var headerFields: [[UInt8]] = []
             var currentField: [UInt8] = []
             for byte in queryBytes {
@@ -359,7 +247,7 @@ extension RFC_6068.Mailto: ASCII.Parseable {
             }
 
             for fieldBytes in headerFields {
-                // Header(ascii:) expects Byte — bridge UInt8 → Byte
+
                 do throws(Header.Error) {
                     headers.append(try Header(ascii: [Byte](fieldBytes)))
                 } catch {
@@ -371,13 +259,9 @@ extension RFC_6068.Mailto: ASCII.Parseable {
     }
 }
 
-// MARK: - Protocol Conformances
-
 extension RFC_6068.Mailto: Swift.RawRepresentable {
     public typealias RawValue = String
 
-    /// The mailto URI's ASCII serialization as a `String` (computed; derived
-    /// from serialization, not stored).
     public var rawValue: String {
         String(decoding: serialized.underlying, as: UTF8.self)
     }
@@ -392,7 +276,7 @@ extension RFC_6068.Mailto: Swift.RawRepresentable {
 }
 
 extension RFC_6068.Mailto: CustomStringConvertible {
-    /// The mailto URI's ASCII serialization decoded as a `String`.
+
     public var description: String {
         String(decoding: serialized.underlying, as: UTF8.self)
     }
