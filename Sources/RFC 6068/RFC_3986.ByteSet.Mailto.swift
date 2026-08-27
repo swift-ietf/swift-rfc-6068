@@ -1,6 +1,6 @@
-import ASCII_Serializer_Primitives
-import Binary_Serializable_Primitives
-import Parseable_ASCII_Primitives
+import ASCII_Serializer
+import Binary_Serializable
+import Parseable_ASCII
 
 extension RFC_3986.ByteSet {
 

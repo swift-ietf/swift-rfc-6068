@@ -12,7 +12,7 @@ extension Target.Dependency {
 
 extension Target.Dependency {
     static var incits41986: Self {
-        .product(name: "ASCII Serializer Primitives", package: "swift-ascii-serializer-primitives")
+        .product(name: "ASCII Serializer", package: "swift-ascii-serializer")
     }
     static var rfc3986: Self { .product(name: "RFC 3986", package: "swift-rfc-3986") }
     static var rfc5322: Self { .product(name: "RFC 5322", package: "swift-rfc-5322") }
@@ -32,13 +32,13 @@ let package = Package(
     ],
     dependencies: [
         .package(
-            url: "https://github.com/swift-primitives/swift-ascii-serializer-primitives.git",
+            url: "https://github.com/swift-molecules/swift-ascii-serializer.git",
             branch: "main"
         ),
         .package(url: "https://github.com/swift-ietf/swift-rfc-3986.git", branch: "main"),
         .package(url: "https://github.com/swift-ietf/swift-rfc-5322.git", branch: "main"),
         .package(
-            url: "https://github.com/swift-primitives/swift-parser-primitives.git",
+            url: "https://github.com/swift-molecules/swift-parser.git",
             branch: "main"
         ),
     ],
@@ -49,7 +49,7 @@ let package = Package(
                 .incits41986,
                 .rfc3986,
                 .rfc5322,
-                .product(name: "Parser Primitives", package: "swift-parser-primitives"),
+                .product(name: "Parser", package: "swift-parser"),
             ]
         ),
         .target(
