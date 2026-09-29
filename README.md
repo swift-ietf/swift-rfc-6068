@@ -3,34 +3,21 @@
 ![Development Status](https://img.shields.io/badge/status-active--development-blue.svg)
 [![CI](https://github.com/swift-ietf/swift-rfc-6068/workflows/CI/badge.svg)](https://github.com/swift-ietf/swift-rfc-6068/actions/workflows/ci.yml)
 
-A Swift implementation of [RFC 6068](https://www.rfc-editor.org/rfc/rfc6068) - The 'mailto' URI Scheme.
+A Swift domain model of [RFC 6068](https://www.rfc-editor.org/rfc/rfc6068) - The 'mailto' URI Scheme.
 
 ## Overview
 
-RFC 6068 defines the mailto URI scheme for designating email addresses. This package provides type-safe parsing and serialization of mailto URIs with full support for header fields (subject, body, cc, bcc, etc.) and percent-encoding per RFC 3986.
+`RFC_6068.Mailto` holds the recipients of a mailto URI as `RFC_5322.Mailbox` values and its header fields as `RFC_6068.Mailto.Header` values, with accessors for the subject, body, to, cc and bcc headers. `RFC_3986.ByteSet.Mailto` carries the `some-delims`, `qchar` and addr-spec byte sets of the grammar.
 
-This RFC obsoletes RFC 2368 and adds support for Internationalized Resource Identifiers (IRIs) per RFC 3987.
-
-## Features
-
-- Complete mailto URI parsing from ASCII bytes
-- Header field (hfield) extraction and construction
-- Percent-encoding/decoding per RFC 3986
-- Convenience accessors for common headers (subject, body, cc, bcc)
-- Full `Binary.ASCII.Serializable` conformance
-- Sendable and Codable types
+Parsing and serializing the URI text form live in [swift-rfc-6068-coder](https://github.com/swift-ietf/swift-rfc-6068-coder) (`RFC_6068.Mailto.Coder`, `RFC_6068.Mailto.Header.Coder`). Apple Foundation `Codable` bridging lives in the `RFC 6068 Foundation Integration` product of this package.
 
 ## Installation
 
-Add to your `Package.swift`:
-
 ```swift
 dependencies: [
-    .package(url: "https://github.com/swift-ietf/swift-rfc-6068", from: "0.2.5")
+    .package(url: "https://github.com/swift-ietf/swift-rfc-6068.git", branch: "main")
 ]
 ```
-
-And add the dependency to your target:
 
 ```swift
 .target(
@@ -44,88 +31,31 @@ And add the dependency to your target:
 ## Quick Start
 
 ```swift
+import RFC_5322
 import RFC_6068
 
-// Parse a mailto URI
-let mailto = try RFC_6068.Mailto(ascii: "mailto:user@example.com?subject=Hello".utf8)
-print(mailto.to.first?.rawValue)  // "user@example.com"
-print(mailto.subject)              // "Hello"
-
-// Create a mailto URI programmatically
-let addr = try RFC_5322.EmailAddress("user@example.com")
 let mailto = RFC_6068.Mailto(
-    to: [addr],
-    headers: [.subject("Hello World"), .body("Message content")]
-)
-print(String(mailto))  // "mailto:user@example.com?subject=Hello%20World&body=Message%20content"
-```
-
-## Usage Examples
-
-### Parsing mailto URIs
-
-```swift
-// Simple mailto
-let mailto = try RFC_6068.Mailto(ascii: "mailto:chris@example.com".utf8)
-
-// With multiple recipients
-let mailto = try RFC_6068.Mailto(ascii: "mailto:user1@example.com,user2@example.com".utf8)
-print(mailto.to.count)  // 2
-
-// With percent-encoded values
-let mailto = try RFC_6068.Mailto(ascii: "mailto:user@example.com?subject=Hello%20World".utf8)
-print(mailto.subject)  // "Hello World"
-
-// Headers-only (no recipients in path)
-let mailto = try RFC_6068.Mailto(ascii: "mailto:?to=user@example.com&subject=Test".utf8)
-```
-
-### Accessing Headers
-
-```swift
-let mailto = try RFC_6068.Mailto(
-    ascii: "mailto:list@example.com?subject=Subscribe&cc=admin@example.com".utf8
+    to: [try RFC_5322.Mailbox("user@example.com")],
+    headers: [try .subject("Hello World"), try .body("Message content")]
 )
 
-// Convenience accessors
-mailto.subject  // "Subscribe"
-mailto.body     // nil
-mailto.cc       // [RFC_5322.EmailAddress]
-mailto.bcc      // [RFC_5322.EmailAddress]
-
-// All recipients (path + header To addresses)
-mailto.allTo    // Combined list
-```
-
-### Building mailto URIs
-
-```swift
-let mailto = RFC_6068.Mailto(
-    to: [try RFC_5322.EmailAddress("recipient@example.com")],
-    headers: [
-        .subject("Meeting Request"),
-        .body("Please confirm your attendance."),
-        .cc("manager@example.com")
-    ]
-)
-
-// Serialize to string
-let uriString = String(mailto)
-
-// Serialize to bytes
-let bytes = [UInt8](mailto)
+mailto.to.first?.address  // "user@example.com"
+mailto.subject            // "Hello World"
+mailto.body               // "Message content"
+mailto.cc                 // [RFC_5322.Mailbox]
+mailto.allTo              // path recipients followed by the `to` header recipients
 ```
 
 ## Related Packages
 
 | Package | Description |
 |---------|-------------|
+| [swift-rfc-6068-coder](https://github.com/swift-ietf/swift-rfc-6068-coder) | mailto URI coders |
 | [swift-rfc-3986](https://github.com/swift-ietf/swift-rfc-3986) | URI Generic Syntax |
 | [swift-rfc-3987](https://github.com/swift-ietf/swift-rfc-3987) | Internationalized Resource Identifiers (IRIs) |
 | [swift-rfc-5322](https://github.com/swift-ietf/swift-rfc-5322) | Internet Message Format |
 | [swift-rfc-2369](https://github.com/swift-ietf/swift-rfc-2369) | URLs for Mailing List Management |
 | [swift-rfc-8058](https://github.com/swift-ietf/swift-rfc-8058) | One-Click Unsubscribe for List Email |
-| [swift-incits-4-1986](https://github.com/swift-incits/swift-incits-4-1986) | US-ASCII character operations |
 
 ## License
 

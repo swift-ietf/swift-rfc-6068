@@ -6,6 +6,7 @@ extension RFC_6068.Mailto {
         case invalidEmailAddress(_ value: String)
         case invalidHeader(_ value: String)
         case invalidPercentEncoding(_ value: String)
+        case trailingInput(_ value: String)
     }
 }
 
@@ -26,6 +27,9 @@ extension RFC_6068.Mailto.Error {
 
         case .invalidPercentEncoding(let value):
             return "Invalid percent encoding in mailto URI: '\(value)'"
+
+        case .trailingInput(let value):
+            return "Unexpected input after the mailto URI: '\(value)'"
         }
     }
 }

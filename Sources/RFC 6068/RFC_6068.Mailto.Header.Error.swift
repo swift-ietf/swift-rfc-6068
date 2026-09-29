@@ -5,6 +5,7 @@ extension RFC_6068.Mailto.Header {
         case missingEquals(_ value: String)
         case emptyName(_ value: String)
         case invalidPercentEncoding(_ value: String)
+        case trailingInput(_ value: String)
     }
 }
 
@@ -22,6 +23,9 @@ extension RFC_6068.Mailto.Header.Error {
 
         case .invalidPercentEncoding(let value):
             return "Invalid percent encoding in header: '\(value)'"
+
+        case .trailingInput(let value):
+            return "Unexpected input after the header field: '\(value)'"
         }
     }
 }

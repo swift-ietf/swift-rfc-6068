@@ -1,6 +1,4 @@
-import ASCII_Serializer
-import Binary_Serializable
-import Parseable_ASCII
+public import RFC_3986
 
 extension RFC_3986.ByteSet {
 
@@ -21,25 +19,4 @@ extension RFC_3986.ByteSet.Mailto {
     public static let addrSpec = RFC_3986.ByteSet.unreserved.union(
         RFC_3986.ByteSet(ascii: "@.")
     )
-}
-
-extension RFC_6068.Mailto {
-
-    static func percentEncode<Bytes: Swift.Collection>(
-        _ bytes: Bytes
-    ) -> [UInt8] where Bytes.Element == UInt8 {
-        RFC_3986.percentEncode(bytes, allowing: .mailto.addrSpec)
-    }
-}
-
-extension RFC_6068.Mailto {
-
-    static func serializeAddrSpec<Buffer: RangeReplaceableCollection>(
-        _ address: RFC_5322.EmailAddress,
-        into buffer: inout Buffer
-    ) where Buffer.Element == Byte {
-        RFC_5322.EmailAddress.LocalPart.serialize(address.localPart, into: &buffer)
-        buffer.append(ASCII.Code.commercialAt)
-        RFC_1123.Domain.serialize(address.domain, into: &buffer)
-    }
 }
