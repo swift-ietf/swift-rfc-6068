@@ -1,6 +1,6 @@
 extension RFC_6068.Mailto {
 
-    public enum Error: Swift.Error, Sendable, Equatable, CustomStringConvertible {
+    public enum Error: Swift::Error, Sendable, Equatable, CustomStringConvertible {
         case empty
         case missingScheme(_ value: String)
         case invalidEmailAddress(_ value: String)
