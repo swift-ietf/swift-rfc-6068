@@ -1,6 +1,6 @@
-public import RFC_6068
 import RFC_5322
 import RFC_5322_Foundation_Integration
+public import RFC_6068
 
 extension RFC_6068.Mailto: Encodable, Decodable {
 
