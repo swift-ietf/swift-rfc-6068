@@ -1,66 +1,18 @@
 # swift-rfc-6068
 
-![Development Status](https://img.shields.io/badge/status-active--development-blue.svg)
-[![CI](https://github.com/swift-ietf/swift-rfc-6068/workflows/CI/badge.svg)](https://github.com/swift-ietf/swift-rfc-6068/actions/workflows/ci.yml)
+Use this package when you need to build, read or write a `mailto:` URI. Start from `RFC_6068.Mailto`, which holds the recipients from the URI path and the header fields after `?` as `RFC_6068.Mailto.Header` values. If you only need an email address and no URI, use `RFC_5322.Mailbox` from swift-rfc-5322. For `Codable`, add the `RFC 6068 Foundation Integration` product.
 
-A Swift domain model of [RFC 6068](https://www.rfc-editor.org/rfc/rfc6068) - The 'mailto' URI Scheme.
+## Laws
 
-## Overview
-
-`RFC_6068.Mailto` holds the recipients of a mailto URI as `RFC_5322.Mailbox` values and its header fields as `RFC_6068.Mailto.Header` values, with accessors for the subject, body, to, cc and bcc headers. `RFC_3986.ByteSet.Mailto` carries the `some-delims`, `qchar` and addr-spec byte sets of the grammar.
-
-Parsing and serializing the URI text form live in [swift-rfc-6068-coder](https://github.com/swift-ietf/swift-rfc-6068-coder) (`RFC_6068.Mailto.Coder`, `RFC_6068.Mailto.Header.Coder`). Apple Foundation `Codable` bridging lives in the `RFC 6068 Foundation Integration` product of this package.
-
-## Installation
-
-```swift
-dependencies: [
-    .package(url: "https://github.com/swift-ietf/swift-rfc-6068.git", branch: "main")
-]
-```
-
-```swift
-.target(
-    name: "YourTarget",
-    dependencies: [
-        .product(name: "RFC 6068", package: "swift-rfc-6068")
-    ]
-)
-```
-
-## Quick Start
-
-```swift
-import RFC_5322
-import RFC_6068
-
-let mailto = RFC_6068.Mailto(
-    to: [try RFC_5322.Mailbox("user@example.com")],
-    headers: [try .subject("Hello World"), try .body("Message content")]
-)
-
-mailto.to.first?.address  // "user@example.com"
-mailto.subject            // "Hello World"
-mailto.body               // "Message content"
-mailto.cc                 // [RFC_5322.Mailbox]
-mailto.allTo              // path recipients followed by the `to` header recipients
-```
-
-## Related Packages
-
-| Package | Description |
-|---------|-------------|
-| [swift-rfc-6068-coder](https://github.com/swift-ietf/swift-rfc-6068-coder) | mailto URI coders |
-| [swift-rfc-3986](https://github.com/swift-ietf/swift-rfc-3986) | URI Generic Syntax |
-| [swift-rfc-3987](https://github.com/swift-ietf/swift-rfc-3987) | Internationalized Resource Identifiers (IRIs) |
-| [swift-rfc-5322](https://github.com/swift-ietf/swift-rfc-5322) | Internet Message Format |
-| [swift-rfc-2369](https://github.com/swift-ietf/swift-rfc-2369) | URLs for Mailing List Management |
-| [swift-rfc-8058](https://github.com/swift-ietf/swift-rfc-8058) | One-Click Unsubscribe for List Email |
-
-## License
-
-This project is licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE.md) for details.
-
-## Contributing
-
-Contributions are welcome. Please open an issue or submit a pull request.
+- Header names are case-insensitive and values are case-sensitive. `Subject=Hello` equals `subject=Hello` but not `subject=HELLO`.
+- `RFC_6068.Mailto.subject` and `RFC_6068.Mailto.body` read the first header with that name.
+- `RFC_6068.Mailto.allTo` is the path recipients followed by the recipients from `to` headers. `RFC_6068.Mailto.to` holds only the path recipients.
+- `RFC_6068.Mailto.cc`, `RFC_6068.Mailto.bcc` and the header part of `RFC_6068.Mailto.allTo` read each header value as one mailbox. A value that isn't a mailbox is left out, with no error.
+- A recipient keeps its display name in memory, but the URI form writes only its address. `Jane Doe <jane@example.com>` is written as `mailto:jane@example.com`.
+- The scheme is read case-insensitively, so `MAILTO:` is accepted. Output always starts with `mailto:`.
+- Parsing stops before whitespace, a control character, DEL or `#`, and leaves them unread. Reading a whole value with `RFC_6068.Mailto.init(ascii:)` fails on anything left over.
+- Recipients are split on literal commas before they are percent-decoded, so an encoded comma (`%2C`) inside a quoted local part stays in one recipient.
+- Header names and values are percent-decoded on input. On output they are percent-encoded except for unreserved characters and `!$'()*+,;:@`, so `&`, `=` and `?` in a value are always escaped. Addresses are encoded except for unreserved characters, `@` and `.`.
+- Empty fields between ampersands are skipped. A field without `=` or with an empty name fails the whole URI.
+- When parsing fails, the input is rewound to where the URI started.
+- With `RFC 6068 Foundation Integration`, a mailto encodes as an object with `to` and `headers`, and a missing key decodes as empty. A header encodes as `name` and `value`, and an empty name fails to decode.
