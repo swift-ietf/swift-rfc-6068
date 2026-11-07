@@ -5,7 +5,9 @@
     import RFC_5322
 
     enum Scan {
+    }
 
+    extension Scan {
         static func run<Input: Cursor.`Protocol`<Byte, Never>>(
             _ input: inout Input,
             while predicate: (Byte) -> Bool
@@ -78,7 +80,6 @@
     }
 
     extension Scan {
-
         static func serialize<Buffer: RangeReplaceableCollection<Byte>>(
             _ header: RFC_6068.Mailto.Header,
             into buffer: inout Buffer
