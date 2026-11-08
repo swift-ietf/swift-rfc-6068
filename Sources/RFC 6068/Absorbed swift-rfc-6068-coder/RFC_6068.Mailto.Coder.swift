@@ -14,7 +14,7 @@
         public static var coder: Coder<ArraySlice<Byte>, [Byte]> { .init() }
     }
 
-extension RFC_6068.Mailto.Coder {
+    extension RFC_6068.Mailto.Coder {
         public typealias Output = RFC_6068.Mailto
 
         public typealias Failure = RFC_6068.Mailto.Error
@@ -69,5 +69,5 @@ extension RFC_6068.Mailto.Coder {
         public borrowing func serialize(_ output: Output, into buffer: inout Buffer) throws(Failure) {
             Scan.serialize(output, into: &buffer)
         }
-}
+    }
 #endif
