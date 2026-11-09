@@ -78,6 +78,28 @@ struct `RFC_6068.Mailto Tests` {
     }
 
     @Test
+    func `comma separated cc, bcc and to headers split into mailboxes`() throws {
+        let mailto = RFC_6068.Mailto(
+            headers: [
+                try .cc("a@example.com,b@example.com"),
+                try .bcc("c@example.com, d@example.com"),
+                try .to("e@example.com,f@example.com"),
+            ]
+        )
+
+        #expect(mailto.cc.map(\.address) == ["a@example.com", "b@example.com"])
+        #expect(mailto.bcc.map(\.address) == ["c@example.com", "d@example.com"])
+        #expect(mailto.allTo.map(\.address) == ["e@example.com", "f@example.com"])
+    }
+
+    @Test
+    func `a cc list drops only the entries that are not mailboxes`() throws {
+        let mailto = RFC_6068.Mailto(headers: [try .cc("a@example.com,not a mailbox,b@example.com")])
+
+        #expect(mailto.cc.map(\.address) == ["a@example.com", "b@example.com"])
+    }
+
+    @Test
     func `the qchar set allows the some-delims and forbids the header separators`() {
         let qchar = RFC_3986.ByteSet.mailto.qchar
 

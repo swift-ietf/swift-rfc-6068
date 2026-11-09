@@ -43,9 +43,17 @@ extension RFC_6068.Mailto {
     private func mailboxes(named name: String) -> [RFC_5322.Mailbox] {
         headers
             .filter { $0.name.lowercased() == name }
-            .compactMap { header in
+            .flatMap { header in
+                header.value.split(separator: ",")
+            }
+            .compactMap { segment in
+                let address = segment
+                    .drop { $0 == " " || $0 == "\t" }
+                    .reversed()
+                    .drop { $0 == " " || $0 == "\t" }
+                    .reversed()
                 do throws(RFC_5322.Mailbox.Error) {
-                    return try RFC_5322.Mailbox(header.value)
+                    return try RFC_5322.Mailbox(String(address))
                 } catch {
                     return nil
                 }
