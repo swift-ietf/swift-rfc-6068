@@ -47,7 +47,8 @@ extension RFC_6068.Mailto {
                 header.value.split(separator: ",")
             }
             .compactMap { segment in
-                let address = segment
+                let address =
+                    segment
                     .drop { $0 == " " || $0 == "\t" }
                     .reversed()
                     .drop { $0 == " " || $0 == "\t" }
